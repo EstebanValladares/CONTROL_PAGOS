@@ -1,14 +1,10 @@
 {
-  "timestamp": 1794166889.7121713,
-  "fecha_hora": "08/11/2026 01:41 PM",
+  "timestamp": 1794170068.4683533,
+  "fecha_hora": "08/11/2026 02:34 PM",
   "blindado": true,
-  "commit": "f926383",
+  "commit": "8fe66b4",
   "carpeta": "CONTROL_PAGOS",
-  "pushed": false,
-  "webhook": {
-    "notificado": false,
-    "mensaje": "Webhook de servidor no configurado (esperando auto-deploy de GitHub)."
-  },
+  "pushed": true,
   "ok": true,
-  "mensaje": "Versi\u00f3n generada localmente (Commit f926383). Nota Git: fatal: unable to access 'https://github.com/EstebanValladares/CONTROL_PAGOS.git/': getaddrinfo() thread failed to start"
+  "mensaje": "Versi\u00f3n de CONTROL_PAGOS subida a GitHub con \u00e9xito (Commit 8fe66b4)."
 }
