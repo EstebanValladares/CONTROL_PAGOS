@@ -102,7 +102,7 @@ def telemetria_api():
             "estado": "OPERATIVO",
             "salud": "100%",
             "version": "1.0.0",
-            "servidor": "Docker / Gunicorn Multi-Worker",
+            "servidor": "Servidor Flask",
             "uptime_segundos": uptime_segundos,
             "latencia_db_ms": latencia_db_ms,
             "datos": {
