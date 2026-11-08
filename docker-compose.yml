@@ -1,0 +1,20 @@
+services:
+  control-pagos-oc:
+    build: .
+    container_name: control_pagos_oc
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - ./datos:/app/datos
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GUNICORN_CMD_ARGS=--worker-tmp-dir /dev/shm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/telemetria"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+

@@ -1,0 +1,15 @@
+# Caches y temporales
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+.venv/
+venv/
+.env
+
+# Datos locales del servidor (no sobreescribir DB de produccion)
+datos/*.db
+datos/*.db-shm
+datos/*.db-wal
+datos/*.sqlite
+datos/*.xlsx
