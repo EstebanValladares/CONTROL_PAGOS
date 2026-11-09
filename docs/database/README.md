@@ -32,11 +32,11 @@ Las tablas `proveedores` e `insumos` se cargan desde sus CSV por `indexador.py`;
 
 ## Esquema propuesto para BI (SQL Server)
 
-`sqlserver_bi_schema.sql` define la tabla propuesta `dbo.so_orden_compra_programados`
-para ejecutarse manualmente en la base BI con una cuenta autorizada. El script
-solo crea el esquema si la tabla no existe; no se ha ejecutado desde la aplicación
-ni copia registros.
+`sqlserver_bi_schema.sql` define la tabla propuesta `dbo._pagos_programados`
+para ejecutarse manualmente en la base `Aryve2` del servidor BI con una cuenta
+autorizada. El script solo crea el esquema si la tabla no existe; no se ha ejecutado
+desde la aplicación ni copia registros.
 
 La tabla contiene los campos de pagos programados de `programaciones_oc`. No incluye
-archivos adjuntos ni metadatos de documentos. Antes de usar el esquema, el
-administrador de BI debe aprobar el nombre y tipos de datos.
+archivos adjuntos ni metadatos de documentos. El administrador de BI debe revisar
+y ejecutar el script; la aplicación todavía no escribe ni sincroniza datos a esta tabla.

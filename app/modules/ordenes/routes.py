@@ -185,6 +185,7 @@ def _validar_total_xml_menor_pago(total_xml, monto_pago, numero_oc):
 
 def _replicar_documentos_enkontrol(rutas):
     import shutil
+    from app.core.ftp_service import FTPService
 
     for ruta in rutas:
         try:
@@ -192,6 +193,12 @@ def _replicar_documentos_enkontrol(rutas):
                 shutil.copy2(ruta, os.path.join(ENKONTROL_WEB_DIR, os.path.basename(ruta)))
         except OSError as error:
             print(f"[DOCS] Error replicando a WebEk10: {error}")
+
+    # Réplica hacia el servidor FTP de Enkontrol si está configurado
+    try:
+        FTPService.subir_archivos(rutas)
+    except Exception as ftp_err:
+        print(f"[DOCS] Error replicando a FTP: {ftp_err}")
 
 @ordenes_bp.route("/api/subir-documentos", methods=["POST"])
 def subir_documentos():
@@ -351,6 +358,27 @@ def programar_abono_oc():
             pagado_acum = sum(p["monto_programado"] for p in progs)
             saldo_restante = max(0.0, round(total_oc - pagado_acum, 2))
 
+        # Replicar a base de datos de BI (SQL Server)
+        try:
+            from app.core.bi_service import BIService
+            BIService.insertar_pago({
+                "empresa": empresa,
+                "centro_costos": centro_costos,
+                "numero_oc": numero_oc,
+                "id_ek10": id_ek10,
+                "proveedor": proveedor,
+                "total_oc": total_oc,
+                "monto_programado": monto_programado,
+                "semana": semana,
+                "rubro": rubro,
+                "tipo": str(body.get("tipo", "")).strip(),
+                "concepto": concepto,
+                "creado_por": creado_por,
+                "creado_en": ahora_str
+            })
+        except Exception as err_bi:
+            print(f"[BI ERROR] No se pudo replicar a SQL Server: {err_bi}")
+
         return jsonify({
             "status": "ok",
             "mensaje": f"Pago de ${monto_programado:,.2f} registrado con éxito",
@@ -370,7 +398,8 @@ def eliminar_abono_oc():
         if not puede_borrar_pagos_programados(session.get("usuario_nombre")):
             return jsonify({"status": "error", "mensaje": "No tienes permiso para borrar pagos programados"}), 403
 
-        from app.core.database import transaccion
+        from app.core.database import asegurar_estado_envio_programaciones, transaccion
+        asegurar_estado_envio_programaciones()
 
         body = request.get_json() or {}
         id_abono = int(body.get("id", 0))
@@ -382,8 +411,29 @@ def eliminar_abono_oc():
         if id_abono <= 0:
             return jsonify({"status": "error", "mensaje": "ID de abono no válido"}), 400
 
+        archivos_pendientes_eliminados = []
         with transaccion() as conn:
             cur = conn.cursor()
+            cur.execute(
+                "SELECT estado_envio FROM programaciones_oc WHERE id = ?;",
+                (id_abono,)
+            )
+            programacion = cur.fetchone()
+            if not programacion:
+                return jsonify({"status": "error", "mensaje": "No se encontró el pago programado"}), 404
+            replicar_eliminacion_bi = programacion[0] == "ENVIADO"
+            if not replicar_eliminacion_bi:
+                cur.execute(
+                    "SELECT ruta_archivo FROM documentos_oc WHERE id_abono = ?;",
+                    (id_abono,)
+                )
+                archivos_pendientes_eliminados = [
+                    row[0] for row in cur.fetchall() if row[0]
+                ]
+                cur.execute(
+                    "DELETE FROM documentos_oc WHERE id_abono = ?;",
+                    (id_abono,)
+                )
             cur.execute("DELETE FROM programaciones_oc WHERE id = ?;", (id_abono,))
 
             cur.execute("""
@@ -395,6 +445,16 @@ def eliminar_abono_oc():
             progs = [dict(row) for row in cur.fetchall()]
             pagado_acum = sum(p["monto_programado"] for p in progs)
             saldo_restante = max(0.0, round(total_oc - pagado_acum, 2))
+
+        if archivos_pendientes_eliminados:
+            _limpiar_archivos_creados(archivos_pendientes_eliminados)
+
+        if replicar_eliminacion_bi:
+            try:
+                from app.core.bi_service import BIService
+                BIService.eliminar_abono(empresa, centro_costos, numero_oc)
+            except Exception as err_bi:
+                print(f"[BI ERROR] No se pudo eliminar de SQL Server: {err_bi}")
 
         return jsonify({
             "status": "ok",
@@ -410,7 +470,8 @@ def eliminar_abono_oc():
 @ordenes_bp.route("/api/ordenes/programaciones-semana", methods=["GET"])
 def obtener_programaciones_semana():
     try:
-        from app.core.database import obtener_conexion
+        from app.core.database import asegurar_estado_envio_programaciones, obtener_conexion
+        asegurar_estado_envio_programaciones()
         
         empresa = request.args.get("empresa", "ARYVE").strip().upper()
         semana = request.args.get("semana", "").strip()
@@ -442,7 +503,7 @@ def obtener_programaciones_semana():
         cur.execute(f"""
             SELECT id, empresa, centro_costos, numero_oc, id_ek10, proveedor,
                    total_oc, monto_programado, semana, rubro, tipo, concepto,
-                   creado_por, creado_en,
+                   creado_por, creado_en, estado_envio,
                    (
                        SELECT COUNT(*)
                        FROM documentos_oc d
@@ -455,6 +516,8 @@ def obtener_programaciones_semana():
             ORDER BY id DESC;
         """, valores)
         filas = [dict(r) for r in cur.fetchall()]
+        for fila in filas:
+            fila["es_pendiente"] = fila["estado_envio"] == "PENDIENTE"
         conn.close()
 
         return jsonify({
@@ -472,10 +535,11 @@ def obtener_programaciones_semana():
 def programar_lote_oc():
     archivos_creados = []
     try:
-        from app.core.database import transaccion
+        from app.core.database import asegurar_estado_envio_programaciones, transaccion
         import json
         import time
 
+        asegurar_estado_envio_programaciones()
         if request.is_json:
             body = request.get_json() or {}
         else:
@@ -579,8 +643,8 @@ def programar_lote_oc():
                     INSERT INTO programaciones_oc (
                         empresa, centro_costos, numero_oc, id_ek10, proveedor,
                         total_oc, monto_programado, semana, rubro, tipo, concepto,
-                        creado_por, creado_en
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        creado_por, creado_en, estado_envio
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE');
                 """, (
                     empresa, centro_costos, numero_oc, id_ek10, proveedor,
                     total_oc, monto, semana, rubro, tipo, concepto,
@@ -603,9 +667,10 @@ def programar_lote_oc():
                 })
 
         _replicar_documentos_enkontrol(archivos_creados)
+
         return jsonify({
             "status": "ok",
-            "mensaje": f"Se programaron {guardados} órdenes exitosamente por un total de ${total_monto:,.2f}",
+            "mensaje": f"Se guardaron {guardados} pagos pendientes por un total de ${total_monto:,.2f}. Aún no se enviaron a BI.",
             "guardados": guardados,
             "total_monto": round(total_monto, 2),
             "documentos_guardados": total_documentos,
@@ -617,4 +682,52 @@ def programar_lote_oc():
         return jsonify({"status": "error", "mensaje": str(e)}), 400
     except Exception as e:
         _limpiar_archivos_creados(archivos_creados)
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
+
+@ordenes_bp.route("/api/ordenes/programaciones/<int:id_programacion>/enviar", methods=["POST"])
+def enviar_programacion_bi(id_programacion):
+    try:
+        from app.core.database import asegurar_estado_envio_programaciones, obtener_conexion, transaccion
+
+        asegurar_estado_envio_programaciones()
+        with obtener_conexion(read_only=True) as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT empresa, centro_costos, numero_oc, id_ek10, proveedor,
+                       total_oc, monto_programado, semana, rubro, tipo, concepto,
+                       creado_por, creado_en, estado_envio
+                FROM programaciones_oc
+                WHERE id = ?;
+            """, (id_programacion,))
+            fila = cur.fetchone()
+
+        if not fila:
+            return jsonify({"status": "error", "mensaje": "No se encontró el pago guardado"}), 404
+        if fila["estado_envio"] != "PENDIENTE":
+            return jsonify({"status": "error", "mensaje": "Este pago ya fue enviado a BI"}), 409
+
+        from app.core.bi_service import BIService
+        insertados = BIService.insertar_lote([dict(fila)])
+        if insertados != 1:
+            return jsonify({
+                "status": "error",
+                "mensaje": "No se pudo enviar el pago a BI. El pago permanece pendiente para reintentar."
+            }), 502
+
+        with transaccion() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE programaciones_oc
+                SET estado_envio = 'ENVIADO'
+                WHERE id = ? AND estado_envio = 'PENDIENTE';
+            """, (id_programacion,))
+            if cur.rowcount != 1:
+                raise RuntimeError("El pago cambió de estado durante el envío a BI")
+
+        return jsonify({
+            "status": "ok",
+            "mensaje": f"Pago de ${float(fila['monto_programado']):,.2f} enviado a BI correctamente",
+            "id": id_programacion
+        })
+    except Exception as e:
         return jsonify({"status": "error", "mensaje": str(e)}), 500

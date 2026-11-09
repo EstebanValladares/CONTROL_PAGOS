@@ -49,3 +49,17 @@ def obtener_version_db() -> str:
     except Exception:
         return "1"
 
+def asegurar_estado_envio_programaciones() -> None:
+    """Agrega el estado de sincronización con BI a las programaciones existentes."""
+    with transaccion() as conn:
+        cur = conn.cursor()
+        cur.execute("BEGIN IMMEDIATE;")
+        cur.execute("PRAGMA table_info(programaciones_oc);")
+        columnas = {fila[1] for fila in cur.fetchall()}
+        if not columnas:
+            raise RuntimeError("No existe la tabla programaciones_oc")
+        if "estado_envio" not in columnas:
+            cur.execute("""
+                ALTER TABLE programaciones_oc
+                ADD COLUMN estado_envio TEXT NOT NULL DEFAULT 'ENVIADO';
+            """)

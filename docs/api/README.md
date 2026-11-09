@@ -11,7 +11,8 @@
 | `GET` | `/api/metricas` | `metricas` | KPIs consolidados y estadísticas del `MotorHashCache` |
 | `POST` | `/api/sincronizar` | `sincronizacion` | Disparo manual o programado del sync con EK9 |
 | `POST` | `/api/indexador/reindexar` | `indexador` | Reconstrucción de índices B-Tree y optimización SQLite |
-| `POST` | `/api/ordenes/programar-lote` | `ordenes` | Guarda pagos por lote y los documentos adjuntos asociados |
+| `POST` | `/api/ordenes/programar-lote` | `ordenes` | Guarda pagos pendientes localmente y sus documentos; no los envía a BI |
+| `POST` | `/api/ordenes/programaciones/<id>/enviar` | `ordenes` | Envía a BI un pago pendiente de la tabla GUARDADO |
 
 ---
 
@@ -22,17 +23,22 @@ contiene el arreglo JSON de pagos; los documentos de cada pago se envían en cam
 `archivos_0`, `archivos_1`, etc., usando el índice correspondiente dentro de `items`.
 Cuando un pago incluye documentos, se requieren de 2 a 4 archivos.
 
-La interfaz conserva temporalmente en memoria los pagos preparados y sus archivos
-mientras la página siga abierta. “GUARDAR TODO” los coloca en la tabla “GUARDADO” como
-pendientes, sin escribirlos en la base de datos. El icono de enviar de cada fila envía
-un pago a este endpoint para guardarlo; al recargar la página o cerrar sesión, los
-pendientes no enviados se pierden.
+“GUARDAR TODO” escribe cada pago en `programaciones_oc` con estado `PENDIENTE`.
+Los pagos permanecen en la tabla “GUARDADO” incluso después de recargar la página o
+cerrar sesión. El icono de envío de cada fila llama a
+`POST /api/ordenes/programaciones/<id>/enviar`; solo entonces se replica el pago a BI
+y se cambia su estado a `ENVIADO`. Si BI no confirma la inserción, el pago permanece
+pendiente y la interfaz permite reintentar.
 
-Cuando la carga está habilitada, los pagos y sus documentos se guardan juntos al
-enviar cada pago; la tabla muestra el indicador de documentos disponibles para la orden.
+La migración agrega `estado_envio` a `programaciones_oc` si aún no existe. Los
+registros anteriores se consideran `ENVIADO`; los pagos nuevos se guardan como
+`PENDIENTE`.
+
+Cuando la carga está habilitada, los pagos y sus documentos se guardan juntos en la
+etapa de GUARDAR TODO; la tabla muestra el indicador de documentos disponibles.
 
 La carga de documentos está desactivada por defecto para las pruebas mediante
-`DOCUMENTOS_HABILITADOS = False` en `app/config.py`. Con el valor `False`, al enviar
+`DOCUMENTOS_HABILITADOS = False` en `app/config.py`. Con el valor `False`, al guardar
 un pago el navegador no envía los adjuntos y el servidor no los guarda. Para habilitar
 la persistencia actual, cambiar ese valor a `True` y reiniciar la aplicación. Esto no
 configura FTP: el proyecto todavía no incluye integración FTP.

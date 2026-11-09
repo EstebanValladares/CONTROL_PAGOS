@@ -526,6 +526,24 @@
   color: #64748b !important;
 }
 
+.theme-light .bg-rose-950\/95,
+.theme-light .bg-rose-950\/60 {
+  background-color: #fff1f2 !important;
+  border-color: #e11d48 !important;
+  color: #881337 !important;
+}
+
+.theme-light .bg-emerald-950\/95 {
+  background-color: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #064e3b !important;
+}
+
+.theme-light .bg-rose-500\/20,
+.theme-light .bg-emerald-500\/20 {
+  border-color: currentColor !important;
+}
+
 [v-cloak] { display: none; }
     .slide-fade-enter-active { transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
     .slide-fade-leave-active { transition: all 0.25s cubic-bezier(0.7, 0, 0.84, 0); }
@@ -543,8 +561,8 @@
     }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen transition-colors duration-200">
-  <div id="app" v-cloak :class="temaActual === 'light' ? 'theme-light' : 'theme-dark'" class="px-3 py-3 w-full max-w-[99%] mx-auto relative">
+<body class="theme-light bg-slate-100 text-slate-900 min-h-screen transition-colors duration-200">
+  <div id="app" v-cloak class="theme-light px-3 py-3 w-full max-w-[99%] mx-auto relative">
     
     <!-- MENSAJE FLOTANTE ROJO DE ERROR / NO DISPONIBLE -->
     <transition name="slide-fade">
@@ -1388,7 +1406,7 @@
                     <div v-else-if="archivosPendientesPorOC[claveDocumentosOC(oc)] && archivosPendientesPorOC[claveDocumentosOC(oc)].length > 0">
                       <button type="button" @click="abrirModalAdjuntarOC(oc)"
                               class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500 text-slate-950 border border-emerald-400 flex items-center justify-center gap-1 mx-auto shadow-md hover:bg-emerald-400 cursor-pointer transition animate-pulse"
-                              :title="'Archivos en pausa (' + archivosPendientesPorOC[claveDocumentosOC(oc)].length + '). Se conservarán como pendientes y se guardarán al enviar el pago desde GUARDADO.'">
+                              :title="'Archivos en pausa (' + archivosPendientesPorOC[claveDocumentosOC(oc)].length + '). Se guardarán junto con el pago al pulsar GUARDAR TODO.'">
                         <i class="fa-solid fa-circle-check"></i>
                         <span>ADJUNTADO ({{ archivosPendientesPorOC[claveDocumentosOC(oc)].length }})</span>
                       </button>
@@ -1497,7 +1515,6 @@
           <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-slate-300 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-xl shadow-inner badge-contador">
               {{ programacionesEnVista.length }} registros en la lista
-              <span v-if="pagosPendientesEnvio.length" class="ml-1 text-amber-300">· {{ pagosPendientesEnvio.length }} pendientes en esta sesión</span>
             </span>
             <button @click="cargarProgramacionesSemana(false)" :disabled="cargandoProgSemana" 
                     class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer"
@@ -1542,7 +1559,7 @@
                 <td colspan="10" class="py-8 text-center text-slate-400">
                   <i class="fa-solid fa-folder-open text-2xl text-slate-500 mb-2 block"></i>
                   <span>No hay pagos programados para la semana <strong>{{ semanaCorteMasiva }}</strong><span v-if="filtroVivoObra"> en la obra <strong>{{ filtroVivoObra }}</strong></span>.</span>
-                  <div class="text-[11px] text-slate-400 mt-1">Capture importes en la tabla superior y pulse "GUARDAR TODO" para prepararlos; envíe cada pago desde esta tabla para guardarlo en la base.</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Capture importes arriba y pulse "GUARDAR TODO" para guardarlos como pendientes; use el botón de envío de cada fila para mandarlos a BI.</div>
                 </td>
               </tr>
               <!-- Filas de programaciones guardadas -->
@@ -1678,7 +1695,7 @@
             <p class="mt-1 text-[11px] text-indigo-200/90 leading-relaxed">
               <span v-if="Number(ocParaAdjuntar?.inputMonto) > 0">Comprobantes para el pago programado de <strong class="text-emerald-300">${{ formatearNumero(ocParaAdjuntar.inputMonto) }}</strong>.</span>
               <span v-else>Prepara los comprobantes ahora y captura el importe de esta OC antes de pulsar <strong>GUARDAR TODO</strong>.</span>
-              Selecciona entre <strong>2 a 4 archivos</strong> (Factura PDF, XML, Comprobante, Estimación). Los documentos quedan en pausa por OC; GUARDAR TODO prepara el pago y el icono de envío lo registra junto con sus documentos.
+              Selecciona entre <strong>2 a 4 archivos</strong> (Factura PDF, XML, Comprobante, Estimación). Los documentos quedan en pausa por OC; GUARDAR TODO guarda el pago y los documentos localmente. El botón de envío solo lo replica a BI.
             </p>
             <p class="mt-2 text-[11px] text-amber-200">
               Si adjuntas varios XML, la suma de sus totales debe ser menor al importe del pago. No se requiere XML si no adjuntas uno.
@@ -2110,13 +2127,10 @@
           empresaActiva: localStorage.getItem('empresa_activa_oc') || 'ARYVE',
           usuarioActivo: localStorage.getItem('usuario_activo_oc') || '',
           perfilUsuario: JSON.parse(localStorage.getItem('perfil_activo_oc') || 'null'),
-          temaActual: localStorage.getItem('tema_sistema_oc') || 'dark',
           loginUsuario: '',
           loginPassword: '',
           errorLogin: '',
           programacionesSemana: [],
-          pagosPendientesEnvio: [],
-          archivosPorPagoPendiente: {},
           enviandoPendienteId: null,
           totalMontoProgramadoSemana: 0,
           cargandoProgSemana: false,
@@ -2265,22 +2279,10 @@
           return Boolean(this.puedeBorrarPagosSesion);
         },
         programacionesEnVista() {
-          const normalizarSemana = semana => String(semana || '')
-            .trim()
-            .replace(/^SEM(?:ANA)?[:.]?\s*/i, '')
-            .toUpperCase();
-          const semanaActual = normalizarSemana(this.semanaCorteMasiva || this.filtroVivoSemana);
-          const pendientes = this.pagosPendientesEnvio.filter(prog =>
-            normalizarSemana(prog.semana) === semanaActual &&
-            (!this.filtroVivoObra || prog.centro_costos === this.filtroVivoObra)
-          );
-          return [...pendientes, ...(this.programacionesSemana || [])];
+          return this.programacionesSemana || [];
         },
         totalMontoProgramadoVista() {
-          return Number(this.totalMontoProgramadoSemana || 0) +
-            this.programacionesEnVista.reduce((total, prog) =>
-              total + (prog.es_pendiente ? Number(prog.monto_programado || 0) : 0), 0
-            );
+          return Number(this.totalMontoProgramadoSemana || 0);
         },
         calculoDiferencia() {
           const imp = Number(this.formProgramar.importe) || 0;
@@ -2322,21 +2324,6 @@
         }
       },
       methods: {
-        alternarTema() {
-          this.temaActual = this.temaActual === 'light' ? 'dark' : 'light';
-          localStorage.setItem('tema_sistema_oc', this.temaActual);
-          this.aplicarClaseTema();
-        },
-        aplicarClaseTema() {
-          if (this.temaActual === 'light') {
-            document.body.classList.add('theme-light');
-            document.body.classList.remove('theme-dark', 'bg-slate-900', 'text-slate-100');
-            document.body.classList.add('bg-slate-100', 'text-slate-800');
-          } else {
-            document.body.classList.remove('theme-light', 'bg-slate-100', 'text-slate-800');
-            document.body.classList.add('theme-dark', 'bg-slate-900', 'text-slate-100');
-          }
-        },
         alternarAcordeonOC(oc) {
           if (this.ocExpandidaId === oc.id) {
             this.ocExpandidaId = null;
@@ -2484,35 +2471,50 @@
               items[indice].total_facturas_xml = this.formatearTotalXmlEscalado(totalEscalado);
             }
 
-            const documentosEnLote = items.reduce((total, item) => {
-              return total + (this.archivosPendientesPorOC[this.claveDocumentosOC(item)] || []).length;
-            }, 0);
-            const nuevosPendientes = items.map((item, indice) => {
-              const pendiente = {
-                ...item,
-                id: `pendiente-${Date.now()}-${indice}`,
-                es_pendiente: true,
-                creado_en: 'Pendiente de envío',
-                total_documentos: 0
-              };
-              const clave = this.claveDocumentosOC(item);
-              const archivos = this.archivosPendientesPorOC[clave] || [];
-              this.archivosPorPagoPendiente[pendiente.id] = archivos;
-              if (archivos.length) {
-                this.documentosTemporalesPorProgramacion[pendiente.id] = archivos.length;
-              }
-              delete this.archivosPendientesPorOC[clave];
-              return pendiente;
+            const formData = new FormData();
+            formData.append('items', JSON.stringify(items));
+            let documentosEnLote = 0;
+            if (this.documentosHabilitados) {
+              items.forEach((item, indice) => {
+                const archivos = this.archivosPendientesPorOC[this.claveDocumentosOC(item)] || [];
+                documentosEnLote += archivos.length;
+                archivos.forEach(archivo => formData.append(`archivos_${indice}`, archivo));
+              });
+            } else {
+              documentosEnLote = items.reduce((total, item) =>
+                total + (this.archivosPendientesPorOC[this.claveDocumentosOC(item)] || []).length, 0
+              );
+            }
+
+            const res = await fetch('/api/ordenes/programar-lote', {
+              method: 'POST',
+              body: formData
             });
-            this.pagosPendientesEnvio.push(...nuevosPendientes);
-            for (const oc of lista) {
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudieron guardar los pagos pendientes');
+            }
+            if (!data.guardados) {
+              await this.cargarOrdenesVivo(this.paginaVivo, false);
+              throw new Error('No se guardó ningún pago. Verifica que las órdenes todavía tengan saldo disponible.');
+            }
+
+            const indicesGuardados = new Set(data.items_guardados || []);
+            lista.forEach((oc, indice) => {
+              if (!indicesGuardados.has(indice)) return;
               oc.inputMonto = null;
               oc.inputConcepto = '';
-            }
-            this.actualizarSaldosConPendientes();
-            let mensaje = `${items.length} pago(s) preparados en GUARDADO. Usa el icono de enviar para registrarlos en la base de datos.`;
+              delete this.archivosPendientesPorOC[this.claveDocumentosOC(items[indice])];
+            });
+
+            await this.cargarProgramacionesSemana(false);
+            await this.cargarOrdenesVivo(this.paginaVivo, false);
+            let mensaje = `${data.guardados} pago(s) guardados en la tabla. Aún no se enviaron a BI; usa el botón de envío de cada fila cuando estés listo.`;
             if (!this.documentosHabilitados && documentosEnLote > 0) {
-              mensaje += ` La carga de ${documentosEnLote} documento(s) está desactivada; no se enviarán.`;
+              mensaje += ` Se omitieron ${documentosEnLote} documento(s) porque la carga está desactivada.`;
+            }
+            if (data.guardados < items.length) {
+              mensaje += ` No se guardaron ${items.length - data.guardados} pago(s) porque ya no tenían saldo.`;
             }
             this.dispararToastExito(mensaje);
           } catch (e) {
@@ -2525,49 +2527,15 @@
           if (!prog?.es_pendiente || this.enviandoPendienteId !== null) return;
           this.enviandoPendienteId = prog.id;
           try {
-            const item = {
-              empresa: prog.empresa,
-              centro_costos: prog.centro_costos,
-              numero_oc: prog.numero_oc,
-              id_ek10: prog.id_ek10 || '',
-              proveedor: prog.proveedor || '',
-              total_oc: Number(prog.total_oc) || 0,
-              monto_programado: Number(prog.monto_programado) || 0,
-              semana: prog.semana,
-              tipo: prog.tipo || '',
-              rubro: prog.rubro || '',
-              concepto: prog.concepto || '',
-              creado_por: prog.creado_por || this.usuarioActivo || 'USUARIO',
-              total_facturas_xml: prog.total_facturas_xml
-            };
-            const archivos = this.archivosPorPagoPendiente[prog.id] || [];
-            const formData = new FormData();
-            formData.append('items', JSON.stringify([item]));
-            if (this.documentosHabilitados) {
-              archivos.forEach(archivo => formData.append('archivos_0', archivo));
-            }
-
-            const res = await fetch('/api/ordenes/programar-lote', {
-              method: 'POST',
-              body: formData
+            const res = await fetch(`/api/ordenes/programaciones/${encodeURIComponent(prog.id)}/enviar`, {
+              method: 'POST'
             });
             const data = await res.json();
             if (!res.ok || data.status !== 'ok') {
               throw new Error(data.mensaje || 'No se pudo enviar el pago');
             }
-            if (!data.guardados) {
-              await this.cargarOrdenesVivo(this.paginaVivo, false);
-              throw new Error(`El pago de la OC #${prog.numero_oc} no se guardó porque ya no tiene saldo disponible.`);
-            }
-
-            const confirmacion = (data.programaciones_guardadas || [])[0];
-            if (!this.documentosHabilitados && archivos.length && confirmacion?.id) {
-              this.documentosTemporalesPorProgramacion[confirmacion.id] = archivos.length;
-            }
-            this.pagosPendientesEnvio = this.pagosPendientesEnvio.filter(pendiente => pendiente.id !== prog.id);
-            delete this.archivosPorPagoPendiente[prog.id];
-            delete this.documentosTemporalesPorProgramacion[prog.id];
-            this.dispararToastExito(data.mensaje || `Pago de la OC #${prog.numero_oc} enviado y guardado correctamente.`);
+            this.dispararToastExito(data.mensaje || `Pago de la OC #${prog.numero_oc} enviado a BI.`);
+            await this.cargarProgramacionesSemana(false);
             await this.cargarOrdenesVivo(this.paginaVivo, false);
           } catch (error) {
             this.dispararToastError(error.message || 'Error al enviar el pago');
@@ -2669,19 +2637,6 @@
             .map(valor => String(valor ?? '').trim().toUpperCase())
             .join('|');
         },
-        actualizarSaldosConPendientes() {
-          for (const oc of this.ordenesVivo || []) {
-            if (!Number.isFinite(Number(oc.saldoDisponibleServidor))) {
-              const saldoServidor = oc.saldo_disponible ?? oc.total ?? 0;
-              oc.saldoDisponibleServidor = Number(saldoServidor) || 0;
-            }
-            const clave = this.claveOrdenPago(oc);
-            const montoPendiente = this.pagosPendientesEnvio
-              .filter(pendiente => this.claveOrdenPago(pendiente) === clave)
-              .reduce((total, pendiente) => total + (Number(pendiente.monto_programado) || 0), 0);
-            oc.saldo_disponible = Math.max(0, Number((oc.saldoDisponibleServidor - montoPendiente).toFixed(2)));
-          }
-        },
         esSemanaDeCorteActual(semana) {
           const normalizar = valor => String(valor || '')
             .trim()
@@ -2695,11 +2650,7 @@
         },
         abrirModalAdjuntarOC(oc) {
           const clave = this.claveDocumentosOC(oc);
-          const documentosEnEspera = this.pagosPendientesEnvio.some(pendiente =>
-            this.claveDocumentosOC(pendiente) === clave &&
-            Number(this.documentosTemporalesPorProgramacion[pendiente.id] || 0) > 0
-          );
-          if (oc.total_documentos > 0 || documentosEnEspera) {
+          if (oc.total_documentos > 0) {
             this.dispararToastAdvertencia(`La OC #${oc.numero_oc} ya cuenta con documentos adjuntados. No se permite duplicar.`);
             return;
           }
@@ -2789,8 +2740,10 @@ async cargarProgramacionesSemana(silencioso = false) {
             if (data.status === 'ok') {
               const nuevos = data.datos || [];
               // Evitar mutar el array si los IDs y montos no cambiaron para eliminar micro-recargas visuales
-              const strActual = (this.programacionesSemana || []).map(p => `${p.id}_${p.monto_programado}`).join(',');
-              const strNuevo = nuevos.map(p => `${p.id}_${p.monto_programado}`).join(',');
+              const strActual = (this.programacionesSemana || [])
+                .map(p => `${p.id}_${p.monto_programado}_${p.estado_envio}`).join(',');
+              const strNuevo = nuevos
+                .map(p => `${p.id}_${p.monto_programado}_${p.estado_envio}`).join(',');
               if (strActual !== strNuevo) {
                 this.programacionesSemana = nuevos;
               }
@@ -2810,16 +2763,10 @@ async cargarProgramacionesSemana(silencioso = false) {
             this.dispararToastError('No tienes permiso para borrar pagos programados');
             return;
           }
-          if (prog.es_pendiente) {
-            if (!confirm(`¿Deseas quitar de GUARDADO el pago pendiente de la OC ${prog.numero_oc}? Todavía no está en la base de datos.`)) return;
-            this.pagosPendientesEnvio = this.pagosPendientesEnvio.filter(pendiente => pendiente.id !== prog.id);
-            delete this.archivosPorPagoPendiente[prog.id];
-            delete this.documentosTemporalesPorProgramacion[prog.id];
-            this.actualizarSaldosConPendientes();
-            this.dispararToastExito('Pago pendiente quitado; no se había guardado en la base de datos.');
-            return;
-          }
-          if (!confirm(`¿Deseas eliminar el abono de $${Number(prog.monto_programado).toLocaleString('es-MX', {minimumFractionDigits: 2})} de la OC ${prog.numero_oc}?`)) return;
+          const accion = prog.es_pendiente
+            ? 'quitar de GUARDADO el pago pendiente'
+            : 'eliminar el abono';
+          if (!confirm(`¿Deseas ${accion} de $${Number(prog.monto_programado).toLocaleString('es-MX', {minimumFractionDigits: 2})} de la OC ${prog.numero_oc}?`)) return;
           try {
             const res = await fetch('/api/ordenes/eliminar-abono', {
               method: 'POST',
@@ -2835,7 +2782,9 @@ async cargarProgramacionesSemana(silencioso = false) {
             const data = await res.json();
             if (data.status === 'ok') {
               delete this.documentosTemporalesPorProgramacion[prog.id];
-              this.dispararToastExito('Abono eliminado y saldo restablecido');
+              this.dispararToastExito(prog.es_pendiente
+                ? 'Pago pendiente quitado de GUARDADO; no se envió a BI.'
+                : 'Abono eliminado y saldo restablecido');
               await this.cargarProgramacionesSemana();
               await this.cargarOrdenesVivo(this.paginaVivo, false);
             } else {
@@ -3129,7 +3078,6 @@ async cargarProgramacionesSemana(silencioso = false) {
                 this.totalFiltradoVivo = data.total_filtrado || 0;
                 this.sumaTotalVivo = data.suma_total_filtrado || 0;
               }
-              this.actualizarSaldosConPendientes();
               this.prepararInputsOrdenes();
               await this.cargarProgramacionesSemana();
             }
@@ -3204,12 +3152,6 @@ async cargarProgramacionesSemana(silencioso = false) {
           }
         },
         cerrarSesion() {
-          if (this.pagosPendientesEnvio.length && !confirm(
-            `Hay ${this.pagosPendientesEnvio.length} pago(s) pendiente(s) que todavía no se han enviado. ` +
-            'Se perderán al cerrar la sesión. ¿Deseas continuar?'
-          )) {
-            return;
-          }
           fetch('/api/logout', { method: 'POST' }).catch(err => {
             console.error('Error cerrando la sesión del servidor:', err);
           });
@@ -3223,11 +3165,8 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.errorLogin = '';
           this.filtroResponsable = '';
           this.filtroPlaza = '';
-          this.pagosPendientesEnvio = [];
-          this.archivosPorPagoPendiente = {};
           this.archivosPendientesPorOC = {};
           this.documentosTemporalesPorProgramacion = {};
-          this.actualizarSaldosConPendientes();
         },
         formatearNumero(val) {
           if (val === undefined || val === null || isNaN(val)) return '0.00';
@@ -3330,7 +3269,6 @@ async cargarProgramacionesSemana(silencioso = false) {
         }
       },
       async mounted() {
-        this.aplicarClaseTema();
         if (this.perfilUsuario) {
           this.empresaActiva = this.perfilUsuario.empresa || 'ARYVE';
           this.loginEmpresa = this.empresaActiva;

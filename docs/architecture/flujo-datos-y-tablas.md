@@ -180,12 +180,14 @@ sequenceDiagram
     DB-->>R: Órdenes, saldo y conteo de documentos
     R-->>UI: JSON paginado para la tabla
 
-    UI->>UI: GUARDAR TODO agrega pagos a una cola temporal en memoria
-    UI->>R: POST /api/ordenes/programar-lote al enviar una fila
-    R->>DB: Inserta el pago enviado en programaciones_oc
+    UI->>R: POST /api/ordenes/programar-lote al guardar el lote
+    R->>DB: Inserta pagos como PENDIENTE en programaciones_oc
     opt Documentos habilitados
         R->>DB: Registra metadatos en documentos_oc y guarda archivos
     end
+    UI->>R: POST /api/ordenes/programaciones/id/enviar al pulsar Enviar
+    R->>BI: Inserta el pago en SQL Server
+    R->>DB: Cambia estado_envio a ENVIADO
 ```
 
 ### Filtros de la consulta de órdenes
