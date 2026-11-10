@@ -1,10 +1,14 @@
 {
-  "timestamp": 1794170068.4683533,
-  "fecha_hora": "08/11/2026 02:34 PM",
+  "timestamp": 1794343564.2580829,
+  "fecha_hora": "10/11/2026 02:46 PM",
   "blindado": true,
-  "commit": "8fe66b4",
+  "commit": "5632286",
   "carpeta": "CONTROL_PAGOS",
   "pushed": true,
+  "webhook": {
+    "notificado": false,
+    "mensaje": "Webhook de servidor no configurado (esperando auto-deploy de GitHub)."
+  },
   "ok": true,
-  "mensaje": "Versi\u00f3n de CONTROL_PAGOS subida a GitHub con \u00e9xito (Commit 8fe66b4)."
+  "mensaje": "Versi\u00f3n de CONTROL_PAGOS sincronizada y subida a GitHub con \u00e9xito (Commit 5632286)."
 }
