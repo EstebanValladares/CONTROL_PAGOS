@@ -1,0 +1,547 @@
+    
+    /* ======================================================== */
+    /* MODO CLARO (LIGHT THEME) ELEGANTE, INTENSO Y PROFESIONAL */
+    /* ======================================================== */
+    body.theme-light,
+    .theme-light {
+      background-color: #f1f5f9 !important; /* Fondo suave slate-100 */
+      color: #0f172a !important; /* Texto oscuro de alto contraste */
+    }
+
+    /* Encabezado y tarjetas principales en blanco puro */
+    .theme-light header,
+    .theme-light .bg-slate-800,
+    .theme-light .bg-slate-800\/95,
+    .theme-light .bg-slate-800\/90,
+    .theme-light .bg-slate-800\/80,
+    .theme-light .bg-slate-800\/70,
+    .theme-light .bg-slate-800\/60,
+    .theme-light .bg-slate-850,
+    .theme-light .bg-slate-850\/90 {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    /* Barra unificada de filtros en blanco corporativo */
+    .theme-light section.bg-gradient-to-r,
+    .theme-light section {
+      background: #ffffff !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 4px 15px -2px rgba(16, 185, 129, 0.08) !important;
+    }
+
+    /* Inputs, selects y campos de captura en modo claro */
+    .theme-light input,
+    .theme-light select,
+    .theme-light .bg-slate-900,
+    .theme-light .bg-slate-900\/95,
+    .theme-light .bg-slate-900\/90 {
+      background-color: #ffffff !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03) !important;
+    }
+
+    .theme-light .bg-slate-900\/80,
+    .theme-light .bg-slate-900\/70,
+    .theme-light .bg-slate-900\/60,
+    .theme-light .bg-slate-900\/50,
+    .theme-light .bg-slate-900\/40 {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+
+    .theme-light button.bg-slate-800,
+    .theme-light button.bg-slate-900 {
+      background-color: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+      color: #1e293b !important;
+    }
+
+    .theme-light button.bg-slate-800:hover,
+    .theme-light button.bg-slate-900:hover {
+      background-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+
+    .theme-light button.bg-slate-800:disabled,
+    .theme-light button.bg-slate-900:disabled {
+      background-color: #e2e8f0 !important;
+      color: #64748b !important;
+      opacity: 0.65 !important;
+    }
+
+    .theme-light .bg-slate-800\/95 {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+
+    .theme-light form button[type="submit"] {
+      background-color: #4338ca !important;
+      color: #ffffff !important;
+    }
+
+    .theme-light form button[type="submit"]:hover:not(:disabled) {
+      background-color: #3730a3 !important;
+    }
+
+    .theme-light .bg-indigo-600\/20 {
+      background-color: #e0e7ff !important;
+      border-color: #a5b4fc !important;
+    }
+
+    .theme-light .modal-adjuntar-card {
+      background-color: #ffffff !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28) !important;
+    }
+
+    .theme-light .modal-adjuntar-card .modal-adjuntar-cancelar {
+      background-color: #e2e8f0 !important;
+      border: 1px solid #64748b !important;
+      color: #0f172a !important;
+      opacity: 1 !important;
+    }
+
+    .theme-light .modal-adjuntar-card .modal-adjuntar-cancelar:hover {
+      background-color: #cbd5e1 !important;
+      color: #020617 !important;
+    }
+
+    .theme-light .modal-adjuntar-card .modal-adjuntar-guardar {
+      background-image: none !important;
+      background-color: #047857 !important;
+      border: 1px solid #065f46 !important;
+      color: #ffffff !important;
+      opacity: 1 !important;
+    }
+
+    .theme-light .modal-adjuntar-card .modal-adjuntar-guardar:hover:not(:disabled) {
+      background-color: #065f46 !important;
+    }
+
+    .theme-light .modal-adjuntar-card .modal-adjuntar-guardar:disabled {
+      background-color: #cbd5e1 !important;
+      border-color: #64748b !important;
+      color: #334155 !important;
+      opacity: 1 !important;
+      box-shadow: none !important;
+    }
+
+    .theme-light .modal-adjuntar-card .zona-adjuntar-archivos {
+      background-color: #f1f5f9 !important;
+      border-color: #64748b !important;
+    }
+
+    .theme-light .modal-adjuntar-card .zona-adjuntar-archivos:hover {
+      background-color: #e0e7ff !important;
+      border-color: #4338ca !important;
+    }
+
+    .theme-light input::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    .theme-light select option {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+
+    /* ======================================================== */
+    /* TABLA 1: ENCABEZADOS Y CELDAS CON COLORES MÁS INTENSOS   */
+    /* ======================================================== */
+    .theme-light table {
+      background-color: #ffffff !important;
+    }
+
+    .theme-light thead,
+    .theme-light thead tr,
+    .theme-light thead th {
+      background-color: #f1f5f9 !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      font-size: 11px !important;
+    }
+
+    .theme-light tbody tr {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+
+    .theme-light tbody tr:hover {
+      background-color: #e0f2fe !important;
+    }
+
+    .theme-light tbody td {
+      border-color: #cbd5e1 !important;
+    }
+
+    .theme-light tbody select,
+    .theme-light tbody input:not([type="checkbox"]) {
+      border-color: #64748b !important;
+      color: #0f172a !important;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .theme-light tbody .campo-tipo-fijo {
+      border-width: 1px !important;
+      font-weight: 900 !important;
+    }
+
+    .theme-light .campo-tipo-fijo.bg-cyan-950\/70 {
+      background-color: #cffafe !important;
+      border-color: #0891b2 !important;
+      color: #155e75 !important;
+    }
+
+    .theme-light .campo-tipo-fijo.bg-amber-950\/70 {
+      background-color: #fef3c7 !important;
+      border-color: #d97706 !important;
+      color: #78350f !important;
+    }
+
+    .theme-light .campo-tipo-fijo.bg-purple-950\/70 {
+      background-color: #f3e8ff !important;
+      border-color: #9333ea !important;
+      color: #581c87 !important;
+    }
+
+    .theme-light .campo-tipo-fijo.bg-emerald-950\/70 {
+      background-color: #d1fae5 !important;
+      border-color: #059669 !important;
+      color: #064e3b !important;
+    }
+
+    .theme-light tbody .campo-rubro {
+      background-color: #eef2ff !important;
+      border-color: #4f46e5 !important;
+      color: #1e1b4b !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light tbody .campo-rubro:focus {
+      border-color: #312e81 !important;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+    }
+
+    .theme-light .accion-documentos-oc {
+      background-color: #d1fae5 !important;
+      border-color: #059669 !important;
+      color: #065f46 !important;
+      font-weight: 900 !important;
+    }
+
+    .theme-light .monto-programacion-guardada {
+      color: #047857 !important;
+      font-weight: 900 !important;
+      text-shadow: 0 0 1px rgba(4, 120, 87, 0.35) !important;
+    }
+
+    .theme-light .accion-documentos-oc:hover {
+      background-color: #a7f3d0 !important;
+      color: #064e3b !important;
+    }
+
+    .theme-light .accion-adjuntar-oc {
+      background-color: #dbeafe !important;
+      border-color: #2563eb !important;
+      color: #1e40af !important;
+      font-weight: 800 !important;
+      opacity: 1 !important;
+    }
+
+    .theme-light .accion-adjuntar-oc:hover {
+      background-color: #bfdbfe !important;
+      color: #1e3a8a !important;
+    }
+
+    .theme-light .accion-borrar-programacion {
+      background-color: #fee2e2 !important;
+      border-color: #dc2626 !important;
+      color: #991b1b !important;
+      font-weight: 900 !important;
+    }
+
+    .theme-light .accion-borrar-programacion:hover {
+      background-color: #fecaca !important;
+      color: #7f1d1d !important;
+    }
+
+    /* Resaltar fila con captura activa en verde menta elegante */
+    .theme-light tr.bg-emerald-950\/25 {
+      background-color: #ecfdf5 !important;
+      border-left-color: #059669 !important;
+    }
+
+    /* Bordes generales en modo claro */
+    .theme-light .border-slate-700,
+    .theme-light .border-slate-700\/80,
+    .theme-light .border-slate-700\/60,
+    .theme-light .border-slate-700\/50 {
+      border-color: #cbd5e1 !important;
+    }
+
+    /* Tipografías y textos intensos en modo claro */
+    .theme-light .text-white {
+      color: #0f172a !important;
+      font-weight: 700;
+    }
+    .theme-light .text-slate-200,
+    .theme-light .text-slate-300 {
+      color: #1e293b !important;
+    }
+    .theme-light .text-slate-400,
+    .theme-light .text-slate-500 {
+      color: #334155 !important;
+      font-weight: 600;
+    }
+
+    /* Obra en ámbar intenso / nítido */
+    .theme-light td.font-bold.text-amber-300,
+    .theme-light .text-amber-300,
+    .theme-light .text-amber-400 {
+      color: #9a3412 !important; /* Ámbar/naranja oscuro de máxima legibilidad */
+      font-weight: 800 !important;
+    }
+
+    /* Números de OC en azul índigo profundo */
+    .theme-light td.text-indigo-400,
+    .theme-light .text-indigo-400,
+    .theme-light .text-indigo-300 {
+      color: #312e81 !important; /* Índigo 900 oscuro y nítido */
+      font-weight: 800 !important;
+    }
+
+    /* Importes numéricos en negro/slate intenso */
+    .theme-light td.text-right.font-mono.font-bold,
+    .theme-light .font-mono.font-bold.text-white {
+      color: #020617 !important; /* Casi negro para máxima nitidez */
+      font-weight: 800 !important;
+    }
+
+    .theme-light .text-teal-300 {
+      color: #0f766e !important; /* Teal 700 intenso */
+      font-weight: 700 !important;
+    }
+    .theme-light .text-sky-300 {
+      color: #0369a1 !important; /* Sky 700 intenso */
+      font-weight: 700 !important;
+    }
+
+    /* Badges de Tipo con colores vivos y sólidos */
+    .theme-light .bg-cyan-500\/10,
+    .theme-light .bg-cyan-950\/40 {
+      background-color: #e0f2fe !important;
+      border-color: #38bdf8 !important;
+      color: #0369a1 !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light .bg-amber-500\/10,
+    .theme-light .bg-amber-950\/40 {
+      background-color: #fef3c7 !important;
+      border-color: #f59e0b !important;
+      color: #92400e !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light .bg-purple-500\/10,
+    .theme-light .bg-purple-950\/40 {
+      background-color: #f3e8ff !important;
+      border-color: #c084fc !important;
+      color: #6b21a8 !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light .bg-emerald-500\/10,
+    .theme-light .bg-emerald-950\/40 {
+      background-color: #d1fae5 !important;
+      border-color: #34d399 !important;
+      color: #065f46 !important;
+      font-weight: 800 !important;
+    }
+
+    /* Badges de Rubro / Especialidad en morado/azul intenso */
+    .theme-light .bg-indigo-500\/10,
+    .theme-light .bg-indigo-950\/40 {
+      background-color: #ede9fe !important;
+      border-color: #818cf8 !important;
+      color: #4338ca !important;
+      font-weight: 800 !important;
+    }
+
+    /* Input directo de Importe a Programar en modo claro */
+    .theme-light td.bg-emerald-950\/20 {
+      background-color: #f0fdf4 !important;
+      border-color: #86efac !important;
+    }
+    .theme-light input.border-emerald-500 {
+      background-color: #dcfce7 !important;
+      border-color: #047857 !important;
+      color: #064e3b !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light thead,
+    .theme-light thead tr,
+    .theme-light thead th {
+      background-color: #e2e8f0 !important;
+      border-color: #64748b !important;
+      color: #0f172a !important;
+    }
+
+    /* ======================================================== */
+    /* SEGUNDA TABLA: BANNER ELEGANTE EN MODO CLARO             */
+    /* ======================================================== */
+    .theme-light .banner-segunda-tabla,
+    body.theme-light .banner-segunda-tabla {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 45%, #ffffff 100%) !important;
+      border-color: #6ee7b7 !important;
+      border-width: 1px 1px 2px 1px !important;
+      color: #064e3b !important;
+      box-shadow: 0 4px 15px -2px rgba(16, 185, 129, 0.12) !important;
+    }
+
+    .theme-light .banner-segunda-tabla .icono-guardado,
+    body.theme-light .banner-segunda-tabla .icono-guardado {
+      background-color: #d1fae5 !important;
+      border-color: #34d399 !important;
+      color: #059669 !important;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .theme-light .banner-segunda-tabla .badge-guardado,
+    body.theme-light .banner-segunda-tabla .badge-guardado {
+      background-color: #059669 !important;
+      color: #ffffff !important;
+      border-color: #047857 !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    .theme-light .banner-segunda-tabla .badge-semana,
+    body.theme-light .banner-segunda-tabla .badge-semana {
+      color: #334155 !important;
+      font-weight: 700 !important;
+    }
+
+    .theme-light .banner-segunda-tabla .badge-semana strong,
+    body.theme-light .banner-segunda-tabla .badge-semana strong {
+      color: #b45309 !important;
+      font-weight: 800 !important;
+    }
+
+    .theme-light .banner-segunda-tabla .titulo-total-pagado,
+    body.theme-light .banner-segunda-tabla .titulo-total-pagado {
+      color: #0f172a !important;
+      font-weight: 900 !important;
+    }
+
+    .theme-light .banner-segunda-tabla .monto-total-pagado,
+    body.theme-light .banner-segunda-tabla .monto-total-pagado {
+      color: #047857 !important;
+      font-weight: 900 !important;
+      font-size: 1.5rem !important;
+      text-shadow: none !important;
+    }
+
+    .theme-light .banner-segunda-tabla .badge-contador,
+    body.theme-light .banner-segunda-tabla .badge-contador {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+      font-weight: 800 !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
+    }
+
+    
+/* ======================================================== */
+/* ESTILOS DE MODO CLARO PARA MODALES Y EXPEDIENTES         */
+/* ======================================================== */
+.theme-light .bg-slate-800 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+.theme-light .bg-slate-900,
+.theme-light .bg-slate-900\/60,
+.theme-light .bg-slate-900\/90 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.theme-light .bg-slate-850 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+.theme-light .bg-indigo-950\/40 {
+  background-color: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1e3a8a !important;
+}
+.theme-light .text-indigo-200,
+.theme-light .text-indigo-200\/90 {
+  color: #1e40af !important;
+  font-weight: 600 !important;
+}
+.theme-light .text-indigo-300 {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+.theme-light .border-dashed {
+  border-color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+.theme-light .border-dashed:hover {
+  border-color: #2563eb !important;
+  background-color: #eff6ff !important;
+}
+.theme-light .border-dashed span.text-slate-200 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+.theme-light .border-dashed span.text-slate-500 {
+  color: #64748b !important;
+}
+
+.theme-light .bg-rose-950\/95,
+.theme-light .bg-rose-950\/60 {
+  background-color: #fff1f2 !important;
+  border-color: #e11d48 !important;
+  color: #881337 !important;
+}
+
+.theme-light .bg-emerald-950\/95 {
+  background-color: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #064e3b !important;
+}
+
+.theme-light .bg-rose-500\/20,
+.theme-light .bg-emerald-500\/20 {
+  border-color: currentColor !important;
+}
+
+[v-cloak] { display: none; }
+    .slide-fade-enter-active { transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+    .slide-fade-leave-active { transition: all 0.25s cubic-bezier(0.7, 0, 0.84, 0); }
+    .slide-fade-enter-from, .slide-fade-leave-to {
+      transform: translate(-50%, -24px);
+      opacity: 0;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15%, 45%, 75% { transform: translateX(-6px); }
+      30%, 60%, 90% { transform: translateX(6px); }
+    }
+    .shake-error {
+      animation: shake 0.45s ease-in-out;
+    }
