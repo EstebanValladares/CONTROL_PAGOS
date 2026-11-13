@@ -8,6 +8,7 @@ use App\Services\OrdenesService;
 use App\Services\PagosService;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\Process\Process;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -283,6 +284,41 @@ class OrdenesController extends Controller
             return response()->json($res);
         } catch (InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 400);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
+        }
+    }
+
+    public function sincronizarEnkontrol(Request $request): JsonResponse
+    {
+        try {
+            $script = base_path('sincronizar_ordenes_ek9.py');
+            if (!file_exists($script)) {
+                return response()->json(['status' => 'error', 'mensaje' => 'Script de sincronización no encontrado'], 404);
+            }
+
+            $pythonExec = 'python';
+            $posibles = [
+                'sys.executable',
+                'python3',
+                'python'
+            ];
+            foreach ($posibles as $p) {
+                if (file_exists($p)) {
+                    $pythonExec = $p;
+                    break;
+                }
+            }
+
+            $process = new Process([$pythonExec, $script]);
+            $process->setTimeout(30);
+            $process->run();
+
+            return response()->json([
+                'status' => 'ok',
+                'salida' => $process->getOutput(),
+                'exitoso' => $process->isSuccessful()
+            ]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
         }

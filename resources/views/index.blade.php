@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1571,14 +1571,29 @@
 @endverbatim
 
 
-  <!-- Configuración Inyectada desde el Servidor Flask -->
+  <!-- Configuración Inyectada desde Laravel -->
   <script>
     window.__APP_CONFIG__ = {
+      baseUrl: {!! json_encode(url('/')) !!},
       documentosHabilitados: {!! json_encode($documentos_habilitados ?? true) !!},
       puedeBorrarPagosSesion: {!! json_encode($puede_borrar_pagos_sesion ?? false) !!}
     };
+
+    // Auto-adaptador global de fetch para subdirectorios y dominios virtuales
+    (function() {
+      const base = (window.__APP_CONFIG__.baseUrl || '').replace(/\/$/, '');
+      if (base) {
+        const originalFetch = window.fetch;
+        window.fetch = function(input, init) {
+          if (typeof input === 'string' && input.startsWith('/api/')) {
+            input = base + input;
+          }
+          return originalFetch.call(this, input, init);
+        };
+      }
+    })();
   </script>
   <!-- Aplicación Vue 3 Modular -->
-  <script src="{{ asset('js/app.js') }}?v=2.0"></script>
+  <script src="{{ asset('js/app.js') }}?v=2.3"></script>
 </body>
 </html>

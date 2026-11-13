@@ -28,6 +28,7 @@ Route::prefix('api')->group(function () {
     Route::get('/ordenes/programaciones-semana', [OrdenesController::class, 'programacionesSemana']);
     Route::post('/ordenes/programar-lote', [OrdenesController::class, 'programarLote']);
     Route::post('/ordenes/programaciones/{id}/enviar', [OrdenesController::class, 'enviarProgramacionBi']);
+    Route::post('/ordenes/sincronizar', [OrdenesController::class, 'sincronizarEnkontrol']);
 
     // Pagos y Conciliación
     Route::get('/filtros', [PagosController::class, 'filtros']);

@@ -76,6 +76,33 @@ class PagosService
                     ->whereRaw("fecha_inicio <= date('now', 'localtime')")
                     ->whereRaw("fecha_final >= date('now', 'localtime')")
                     ->first();
+
+                if (!$semRow) {
+                    $ahora = new \DateTime();
+                    $diaSemana = (int)$ahora->format('N'); // 1 = lunes, 7 = domingo
+                    $lunes = (clone $ahora)->modify('-' . ($diaSemana - 1) . ' days')->format('Y-m-d');
+                    $domingo = (clone $ahora)->modify('+' . (7 - $diaSemana) . ' days')->format('Y-m-d');
+                    $semNum = (int)$ahora->format('W');
+                    $yearNum = (int)$ahora->format('Y');
+                    $etiqueta = "SEM: {$semNum}-{$yearNum}";
+
+                    DB::table('cat_semanas_ek9')->insertOrIgnore([
+                        'etiqueta' => $etiqueta,
+                        'sem' => $semNum,
+                        'year' => $yearNum,
+                        'fecha_inicio' => $lunes,
+                        'fecha_final' => $domingo,
+                    ]);
+
+                    $semRow = (object)[
+                        'etiqueta' => $etiqueta,
+                        'sem' => $semNum,
+                        'year' => $yearNum,
+                        'fecha_inicio' => $lunes,
+                        'fecha_final' => $domingo,
+                    ];
+                }
+
                 if ($semRow) {
                     $semanaActual = [
                         'etiqueta' => $semRow->etiqueta,

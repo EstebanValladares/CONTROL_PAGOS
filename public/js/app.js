@@ -912,6 +912,7 @@ async cargarProgramacionesSemana(silencioso = false) {
           }
           if (!silencioso) {
             this.cargandoVivo = true;
+            fetch('/api/ordenes/sincronizar', { method: 'POST' }).catch(() => {});
           }
           this.paginaVivo = pagina;
           try {
@@ -1168,12 +1169,19 @@ async cargarProgramacionesSemana(silencioso = false) {
             await this.cargarDatos(1);
           }
         }
-        // Auto-refresco en vivo cada 30s para capturar OCs nuevas de Enkontrol
+        // Auto-refresco en vivo cada 15s para capturar OCs nuevas de Enkontrol
         setInterval(() => {
           if (this.vistaActiva === 'ORDENES_VIVO' && this.paginaVivo === 1 && !this.filtroVivoBusqueda) {
             // Refresco silencioso: actualiza en segundo plano sin parpadeos ni spinners
             this.cargarOrdenesVivo(1, true);
           }
         }, 15000);
+
+        // Auto-sincronización periódica con Enkontrol cada 60s
+        setInterval(() => {
+          if (this.vistaActiva === 'ORDENES_VIVO') {
+            fetch('/api/ordenes/sincronizar', { method: 'POST' }).catch(() => {});
+          }
+        }, 60000);
       }
     }).mount('#app');
