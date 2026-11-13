@@ -3,6 +3,7 @@
     createApp({
       data() {
         return {
+          baseUrl: (window.__APP_CONFIG__ && window.__APP_CONFIG__.baseUrl) ? window.__APP_CONFIG__.baseUrl.replace(/\/$/, '') : '',
           documentosHabilitados: (window.__APP_CONFIG__ && window.__APP_CONFIG__.documentosHabilitados) !== undefined ? window.__APP_CONFIG__.documentosHabilitados : false,
           puedeBorrarPagosSesion: (window.__APP_CONFIG__ && window.__APP_CONFIG__.puedeBorrarPagosSesion) !== undefined ? window.__APP_CONFIG__.puedeBorrarPagosSesion : false,
           loginEmpresa: localStorage.getItem('empresa_activa_oc') || 'ARYVE',

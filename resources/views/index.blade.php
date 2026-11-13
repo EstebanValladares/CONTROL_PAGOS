@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -160,7 +160,7 @@
 
           <!-- BOTONES DE ACCIÓN EXCEL -->
           <a v-if="puedeVerConcentrado"
-             :href="'/api/descargar-excel?empresa=' + encodeURIComponent(empresaActiva) + '&plaza=' + encodeURIComponent(filtroPlaza) + '&semana=' + encodeURIComponent(filtroSemana) + '&responsable=' + encodeURIComponent(filtroResponsable)" 
+             :href="baseUrl + '/api/descargar-excel?empresa=' + encodeURIComponent(empresaActiva) + '&plaza=' + encodeURIComponent(filtroPlaza) + '&semana=' + encodeURIComponent(filtroSemana) + '&responsable=' + encodeURIComponent(filtroResponsable)" 
              class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
             <i class="fa-solid fa-file-excel"></i>
             <span>Exportar Excel</span>
@@ -1247,7 +1247,7 @@
                 <div class="text-[10px] text-slate-500 font-mono">{{ (doc.tamano_bytes / 1024).toFixed(1) }} KB | {{ doc.creado_en }}</div>
               </div>
             </div>
-            <a :href="'/api/descargar-archivo-oc/' + doc.id" download
+            <a :href="baseUrl + '/api/descargar-archivo-oc/' + doc.id" download
                class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-white border border-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
               <i class="fa-solid fa-download text-xs"></i>
               <span>Descargar</span>
