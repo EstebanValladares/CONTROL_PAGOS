@@ -3,22 +3,23 @@
 namespace App\Services;
 
 use Exception;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+use InvalidArgumentException;
 
 class OrdenesService
 {
     public static function asegurarColumnaEstadoEnvio(): void
     {
         try {
-            $cols = DB::select("PRAGMA table_info(programaciones_oc);");
-            $nombres = array_map(fn($c) => $c->name, $cols);
-            if (!in_array('estado_envio', $nombres, true)) {
+            $cols = DB::select('PRAGMA table_info(programaciones_oc);');
+            $nombres = array_map(fn ($c) => $c->name, $cols);
+            if (! in_array('estado_envio', $nombres, true)) {
                 DB::statement("ALTER TABLE programaciones_oc ADD COLUMN estado_envio TEXT NOT NULL DEFAULT 'ENVIADO';");
             }
         } catch (Exception $e) {
-            Log::warning("[DB] Error verificando estado_envio: " . $e->getMessage());
+            Log::warning('[DB] Error verificando estado_envio: '.$e->getMessage());
         }
     }
 
@@ -27,6 +28,7 @@ class OrdenesService
         $row = DB::table('ordenes_compra_ek9')
             ->where('empresa', $empresa)
             ->max('fecha');
+
         return $row ?: null;
     }
 
@@ -45,18 +47,18 @@ class OrdenesService
     public static function consultarOrdenesRecientes(array $params): array
     {
         $empresa = strtoupper(trim($params['empresa'] ?? 'ARYVE'));
-        if (!in_array($empresa, ['ARYVE', 'VELAS'], true)) {
+        if (! in_array($empresa, ['ARYVE', 'VELAS'], true)) {
             $empresa = 'ARYVE';
         }
 
-        $empleadoId = trim((string)($params['empleado_id'] ?? ''));
-        $filtroTemporal = strtoupper(trim((string)($params['filtro_temporal'] ?? 'HOY')));
-        $filtroSemana = trim((string)($params['semana'] ?? ''));
-        $busqueda = trim((string)($params['busqueda'] ?? ''));
-        $obra = trim((string)($params['obra'] ?? ''));
+        $empleadoId = trim((string) ($params['empleado_id'] ?? ''));
+        $filtroTemporal = strtoupper(trim((string) ($params['filtro_temporal'] ?? 'HOY')));
+        $filtroSemana = trim((string) ($params['semana'] ?? ''));
+        $busqueda = trim((string) ($params['busqueda'] ?? ''));
+        $obra = trim((string) ($params['obra'] ?? ''));
         $misOrdenes = filter_var($params['mis_ordenes'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $limite = max(1, (int)($params['limite'] ?? 50));
-        $pagina = max(1, (int)($params['pagina'] ?? 1));
+        $limite = max(1, (int) ($params['limite'] ?? 50));
+        $pagina = max(1, (int) ($params['pagina'] ?? 1));
         $offset = ($pagina - 1) * $limite;
 
         $maxFecha = self::obtenerMaxFecha($empresa);
@@ -65,48 +67,48 @@ class OrdenesService
         $query = DB::table('ordenes_compra_ek9')->where('empresa', $empresa);
 
         // Filtro por usuario / mis_ordenes
-        if ($misOrdenes && !empty($empleadoId) && $empleadoId !== '0' && strtoupper($empleadoId) !== 'ADMIN') {
+        if ($misOrdenes && ! empty($empleadoId) && $empleadoId !== '0' && strtoupper($empleadoId) !== 'ADMIN') {
             if (ctype_digit($empleadoId)) {
-                $query->where('id_empleado', (int)$empleadoId);
+                $query->where('id_empleado', (int) $empleadoId);
             }
         }
 
-        // Filtro por semana o temporal
-        if (!empty($filtroSemana)) {
+        // Filtro por temporal (HOY tiene prioridad para la vista en vivo) o por semana seleccionada
+        if ($filtroTemporal === 'HOY') {
+            $query->whereRaw("fecha = date('now', 'localtime')");
+        } elseif (! empty($filtroSemana)) {
             $catSemana = DB::table('cat_semanas_ek9')
                 ->where('etiqueta', $filtroSemana)
                 ->orWhere('sem', $filtroSemana)
                 ->first();
-            if ($catSemana && !empty($catSemana->fecha_inicio) && !empty($catSemana->fecha_final)) {
+            if ($catSemana && ! empty($catSemana->fecha_inicio) && ! empty($catSemana->fecha_final)) {
                 $query->whereBetween('fecha', [$catSemana->fecha_inicio, $catSemana->fecha_final]);
             }
-        } elseif ($filtroTemporal === 'HOY') {
-            $query->whereRaw("fecha = date('now', 'localtime')");
         } elseif ($filtroTemporal === 'SEMANA') {
             $query->whereRaw("fecha >= date('now', '-7 days')");
         } elseif ($filtroTemporal === 'MES') {
             $query->whereRaw("fecha >= date('now', 'start of month')");
         }
 
-        if (!empty($obra)) {
+        if (! empty($obra)) {
             $query->where('centro_costos', $obra);
         }
 
-        if (!empty($busqueda)) {
+        if (! empty($busqueda)) {
             $p = "%{$busqueda}%";
             $query->where(function ($q) use ($p) {
-                $q->whereRaw("CAST(numero_oc AS TEXT) LIKE ?", [$p])
-                  ->orWhere('proveedor', 'LIKE', $p)
-                  ->orWhere('centro_costos', 'LIKE', $p)
-                  ->orWhere('id_ek10', 'LIKE', $p)
-                  ->orWhere('comentarios', 'LIKE', $p);
+                $q->whereRaw('CAST(numero_oc AS TEXT) LIKE ?', [$p])
+                    ->orWhere('proveedor', 'LIKE', $p)
+                    ->orWhere('centro_costos', 'LIKE', $p)
+                    ->orWhere('id_ek10', 'LIKE', $p)
+                    ->orWhere('comentarios', 'LIKE', $p);
             });
         }
 
         // Totales de la consulta filtrada
         $conteoQuery = clone $query;
         $totalCoincidencias = $conteoQuery->count();
-        $sumaTotal = round((float)($conteoQuery->sum('total') ?? 0.0), 2);
+        $sumaTotal = round((float) ($conteoQuery->sum('total') ?? 0.0), 2);
 
         // Obtener filas paginadas
         $filas = $query->select(
@@ -114,16 +116,16 @@ class OrdenesService
             'total', 'total_rec', 'total_fac', 'estatus', 'solicito_empleado', 'id_empleado',
             'id_ek10', 'comentarios', 'actualizado_en', 'tipo_sugerido', 'rubro_sugerido'
         )
-        ->orderBy('fecha', 'desc')
-        ->orderBy('numero_oc', 'desc')
-        ->offset($offset)
-        ->limit($limite)
-        ->get()
-        ->map(fn($item) => (array)$item)
-        ->toArray();
+            ->orderBy('fecha', 'desc')
+            ->orderBy('numero_oc', 'desc')
+            ->offset($offset)
+            ->limit($limite)
+            ->get()
+            ->map(fn ($item) => (array) $item)
+            ->toArray();
 
         // Enlazar programaciones y documentos para cada OC
-        if (!empty($filas)) {
+        if (! empty($filas)) {
             foreach ($filas as &$f) {
                 $progs = DB::table('programaciones_oc')
                     ->select('id', 'monto_programado', 'semana', 'rubro', 'concepto', 'creado_por', 'creado_en', 'estado_envio')
@@ -132,13 +134,13 @@ class OrdenesService
                     ->where('numero_oc', $f['numero_oc'])
                     ->orderBy('id', 'asc')
                     ->get()
-                    ->map(fn($p) => (array)$p)
+                    ->map(fn ($p) => (array) $p)
                     ->toArray();
 
                 $f['programaciones'] = $progs;
                 $pagadoAcum = array_sum(array_column($progs, 'monto_programado'));
-                $f['total_programado'] = round((float)$pagadoAcum, 2);
-                $f['saldo_disponible'] = max(0.0, round(((float)($f['total'] ?? 0.0)) - $pagadoAcum, 2));
+                $f['total_programado'] = round((float) $pagadoAcum, 2);
+                $f['saldo_disponible'] = max(0.0, round(((float) ($f['total'] ?? 0.0)) - $pagadoAcum, 2));
 
                 $docs = DB::table('documentos_oc')
                     ->select('id', 'nombre_original', 'nombre_guardado', 'tamano_bytes', 'creado_en')
@@ -147,7 +149,7 @@ class OrdenesService
                     ->where('numero_oc', $f['numero_oc'])
                     ->orderBy('id', 'asc')
                     ->get()
-                    ->map(fn($d) => (array)$d)
+                    ->map(fn ($d) => (array) $d)
                     ->toArray();
 
                 $f['documentos'] = $docs;
@@ -158,9 +160,9 @@ class OrdenesService
 
         // KPIs rápidos (Hoy vs Acumulado)
         $kpiQuery = DB::table('ordenes_compra_ek9')->where('empresa', $empresa);
-        if ($misOrdenes && !empty($empleadoId) && $empleadoId !== '0' && strtoupper($empleadoId) !== 'ADMIN') {
+        if ($misOrdenes && ! empty($empleadoId) && $empleadoId !== '0' && strtoupper($empleadoId) !== 'ADMIN') {
             if (ctype_digit($empleadoId)) {
-                $kpiQuery->where('id_empleado', (int)$empleadoId);
+                $kpiQuery->where('id_empleado', (int) $empleadoId);
             }
         }
 
@@ -172,13 +174,13 @@ class OrdenesService
         ")->first();
 
         $kpis = [
-            'ordenes_hoy' => (int)($kpisRaw->ordenes_hoy ?? 0),
-            'monto_hoy' => round((float)($kpisRaw->monto_hoy ?? 0.0), 2),
-            'total_acumulado' => (int)($kpisRaw->total_acumulado ?? 0),
-            'monto_acumulado' => round((float)($kpisRaw->monto_acumulado ?? 0.0), 2),
+            'ordenes_hoy' => (int) ($kpisRaw->ordenes_hoy ?? 0),
+            'monto_hoy' => round((float) ($kpisRaw->monto_hoy ?? 0.0), 2),
+            'total_acumulado' => (int) ($kpisRaw->total_acumulado ?? 0),
+            'monto_acumulado' => round((float) ($kpisRaw->monto_acumulado ?? 0.0), 2),
         ];
 
-        $totalPaginas = $totalCoincidencias > 0 ? (int)ceil($totalCoincidencias / $limite) : 1;
+        $totalPaginas = $totalCoincidencias > 0 ? (int) ceil($totalCoincidencias / $limite) : 1;
 
         return [
             'status' => 'ok',
@@ -200,43 +202,44 @@ class OrdenesService
         $empresa = strtoupper(trim($empresa ?: 'ARYVE'));
         $query = DB::table('programaciones_oc')->where('empresa', $empresa);
 
-        if (!empty($semana)) {
+        if (! empty($semana)) {
             $semanaLimpia = trim(str_replace(['SEM:', 'SEM.'], '', $semana));
             $query->where(function ($q) use ($semana, $semanaLimpia) {
                 $q->where('semana', $semana)
-                  ->orWhere('semana', "SEM: {$semanaLimpia}")
-                  ->orWhere('semana', 'LIKE', "%{$semanaLimpia}%");
+                    ->orWhere('semana', "SEM: {$semanaLimpia}")
+                    ->orWhere('semana', 'LIKE', "%{$semanaLimpia}%");
             });
         }
 
-        if (!empty($obra)) {
+        if (! empty($obra)) {
             $query->where('centro_costos', $obra);
         }
 
         $totales = (clone $query)->selectRaw('COUNT(*) as conteo, SUM(monto_programado) as monto')->first();
-        $totalItems = (int)($totales->conteo ?? 0);
-        $totalMonto = round((float)($totales->monto ?? 0.0), 2);
+        $totalItems = (int) ($totales->conteo ?? 0);
+        $totalMonto = round((float) ($totales->monto ?? 0.0), 2);
 
         $filas = $query->select(
             'id', 'empresa', 'centro_costos', 'numero_oc', 'id_ek10', 'proveedor',
             'total_oc', 'monto_programado', 'semana', 'rubro', 'tipo', 'concepto',
             'creado_por', 'creado_en', 'estado_envio'
         )
-        ->selectSub(function ($sub) {
-            $sub->from('documentos_oc')
-                ->selectRaw('COUNT(*)')
-                ->whereColumn('documentos_oc.empresa', 'programaciones_oc.empresa')
-                ->whereColumn('documentos_oc.centro_costos', 'programaciones_oc.centro_costos')
-                ->whereColumn('documentos_oc.numero_oc', 'programaciones_oc.numero_oc');
-        }, 'total_documentos')
-        ->orderBy('id', 'desc')
-        ->get()
-        ->map(function ($row) {
-            $arr = (array)$row;
-            $arr['es_pendiente'] = ($arr['estado_envio'] ?? '') === 'PENDIENTE';
-            return $arr;
-        })
-        ->toArray();
+            ->selectSub(function ($sub) {
+                $sub->from('documentos_oc')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('documentos_oc.empresa', 'programaciones_oc.empresa')
+                    ->whereColumn('documentos_oc.centro_costos', 'programaciones_oc.centro_costos')
+                    ->whereColumn('documentos_oc.numero_oc', 'programaciones_oc.numero_oc');
+            }, 'total_documentos')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($row) {
+                $arr = (array) $row;
+                $arr['es_pendiente'] = ($arr['estado_envio'] ?? '') === 'PENDIENTE';
+
+                return $arr;
+            })
+            ->toArray();
 
         return [
             'status' => 'ok',
@@ -248,15 +251,62 @@ class OrdenesService
         ];
     }
 
+    /**
+     * @return array{total_oc: float, saldo_disponible: float}
+     */
+    private static function obtenerTotalYSaldoDisponible(string $empresa, string $centroCostos, int $numeroOc): array
+    {
+        $orden = DB::table('ordenes_compra_ek9')
+            ->where('empresa', $empresa)
+            ->where('centro_costos', $centroCostos)
+            ->where('numero_oc', $numeroOc)
+            ->lockForUpdate()
+            ->first(['total']);
+
+        if (! $orden) {
+            throw new InvalidArgumentException("No se encontró la OC #{$numeroOc} para validar su saldo real");
+        }
+
+        $totalOc = round((float) ($orden->total ?? 0.0), 2);
+        $totalProgramado = round((float) DB::table('programaciones_oc')
+            ->where('empresa', $empresa)
+            ->where('centro_costos', $centroCostos)
+            ->where('numero_oc', $numeroOc)
+            ->sum('monto_programado'), 2);
+
+        return [
+            'total_oc' => $totalOc,
+            'saldo_disponible' => max(0.0, round($totalOc - $totalProgramado, 2)),
+        ];
+    }
+
+    private static function validarMontoContraSaldo(float $monto, float $saldoDisponible, int $numeroOc): void
+    {
+        if (! is_finite($monto) || $monto <= 0) {
+            throw new InvalidArgumentException('El monto a programar debe ser mayor a $0.00');
+        }
+
+        $montoCentavos = $monto * 100;
+        if (abs($montoCentavos - round($montoCentavos)) > 0.000001) {
+            throw new InvalidArgumentException('El monto a programar solo puede tener hasta dos decimales');
+        }
+
+        if ((int) round($montoCentavos) > (int) round($saldoDisponible * 100)) {
+            throw new InvalidArgumentException(
+                "La OC #{$numeroOc} solo tiene $".number_format($saldoDisponible, 2).
+                ' disponibles; no se puede programar $'.number_format($monto, 2).'.'
+            );
+        }
+    }
+
     public static function programarAbono(array $datos): array
     {
         $empresa = strtoupper(trim($datos['empresa'] ?? 'ARYVE'));
         $centroCostos = trim($datos['centro_costos'] ?? '');
-        $numeroOc = (int)($datos['numero_oc'] ?? 0);
+        $numeroOc = (int) ($datos['numero_oc'] ?? 0);
         $idEk10 = trim($datos['id_ek10'] ?? '');
         $proveedor = trim($datos['proveedor'] ?? '');
-        $totalOc = (float)($datos['total_oc'] ?? 0.0);
-        $montoProgramado = (float)($datos['monto_programado'] ?? 0.0);
+        $montoProgramado = (float) ($datos['monto_programado'] ?? 0.0);
         $semana = trim($datos['semana'] ?? '');
         $rubro = trim($datos['rubro'] ?? 'MATERIALES');
         $tipo = trim($datos['tipo'] ?? '');
@@ -264,30 +314,57 @@ class OrdenesService
         $creadoPor = trim($datos['creado_por'] ?? 'USUARIO');
 
         if ($numeroOc <= 0) {
-            throw new InvalidArgumentException("Número de OC inválido");
-        }
-        if ($montoProgramado <= 0) {
-            throw new InvalidArgumentException("El monto a programar debe ser mayor a $0.00");
+            throw new InvalidArgumentException('Número de OC inválido');
         }
 
         $ahora = date('Y-m-d H:i:s');
 
-        $nuevoId = DB::table('programaciones_oc')->insertGetId([
-            'empresa' => $empresa,
-            'centro_costos' => $centroCostos,
-            'numero_oc' => $numeroOc,
-            'id_ek10' => $idEk10,
-            'proveedor' => $proveedor,
-            'total_oc' => $totalOc,
-            'monto_programado' => $montoProgramado,
-            'semana' => $semana,
-            'rubro' => $rubro,
-            'tipo' => $tipo,
-            'concepto' => $concepto,
-            'creado_por' => $creadoPor,
-            'creado_en' => $ahora,
-            'estado_envio' => 'ENVIADO',
-        ]);
+        [$nuevoId, $totalOc] = DB::transaction(function () use (
+            $empresa,
+            $centroCostos,
+            $numeroOc,
+            $idEk10,
+            $proveedor,
+            $montoProgramado,
+            $semana,
+            $rubro,
+            $tipo,
+            $concepto,
+            $creadoPor,
+            $ahora
+        ): array {
+            $saldo = self::obtenerTotalYSaldoDisponible($empresa, $centroCostos, $numeroOc);
+            self::validarMontoContraSaldo($montoProgramado, $saldo['saldo_disponible'], $numeroOc);
+
+            $id = DB::table('programaciones_oc')->insertGetId([
+                'empresa' => $empresa,
+                'centro_costos' => $centroCostos,
+                'numero_oc' => $numeroOc,
+                'id_ek10' => $idEk10,
+                'proveedor' => $proveedor,
+                'total_oc' => $saldo['total_oc'],
+                'monto_programado' => $montoProgramado,
+                'semana' => $semana,
+                'rubro' => $rubro,
+                'tipo' => $tipo,
+                'concepto' => $concepto,
+                'creado_por' => $creadoPor,
+                'creado_en' => $ahora,
+                'estado_envio' => 'ENVIADO',
+            ]);
+
+            app(OrdenSeguimientoService::class)->registrarActividadSistema(
+                $empresa,
+                $centroCostos,
+                $numeroOc,
+                'PAGO_PROGRAMADO',
+                'Pago programado por $'.number_format($montoProgramado, 2),
+                Session::has('usuario_id') ? (int) Session::get('usuario_id') : null,
+                (string) Session::get('usuario_nombre', $creadoPor)
+            );
+
+            return [$id, $saldo['total_oc']];
+        });
 
         // Replicar a base de datos de BI (SQL Server)
         try {
@@ -307,7 +384,7 @@ class OrdenesService
                 'creado_en' => $ahora,
             ]);
         } catch (Exception $e) {
-            Log::error("[BI ERROR] Error replicando a SQL Server: " . $e->getMessage());
+            Log::error('[BI ERROR] Error replicando a SQL Server: '.$e->getMessage());
         }
 
         $progs = DB::table('programaciones_oc')
@@ -317,7 +394,7 @@ class OrdenesService
             ->where('numero_oc', $numeroOc)
             ->orderBy('id', 'asc')
             ->get()
-            ->map(fn($p) => (array)$p)
+            ->map(fn ($p) => (array) $p)
             ->toArray();
 
         $pagadoAcum = array_sum(array_column($progs, 'monto_programado'));
@@ -325,7 +402,7 @@ class OrdenesService
 
         return [
             'status' => 'ok',
-            'mensaje' => "Pago de $" . number_format($montoProgramado, 2) . " registrado con éxito",
+            'mensaje' => 'Pago de $'.number_format($montoProgramado, 2).' registrado con éxito',
             'id' => $nuevoId,
             'total_programado' => round($pagadoAcum, 2),
             'saldo_disponible' => $saldoRestante,
@@ -338,7 +415,7 @@ class OrdenesService
         self::asegurarColumnaEstadoEnvio();
 
         if (empty($items)) {
-            throw new InvalidArgumentException("No se enviaron órdenes para programar");
+            throw new InvalidArgumentException('No se enviaron órdenes para programar');
         }
 
         $archivosCreados = [];
@@ -353,44 +430,33 @@ class OrdenesService
         try {
             foreach ($items as $indice => $it) {
                 $archivos = $archivosPorItem[$indice] ?? [];
-                $monto = (float)($it['monto_programado'] ?? 0.0);
+                $monto = (float) ($it['monto_programado'] ?? 0.0);
 
                 if ($monto <= 0) {
-                    if (!empty($archivos)) {
-                        throw new InvalidArgumentException("No se pueden guardar documentos sin un monto programado");
+                    if (! empty($archivos)) {
+                        throw new InvalidArgumentException('No se pueden guardar documentos sin un monto programado');
                     }
+
                     continue;
                 }
 
                 $empresa = strtoupper(trim($it['empresa'] ?? 'ARYVE'));
                 $centroCostos = trim($it['centro_costos'] ?? '');
-                $numeroOc = (int)($it['numero_oc'] ?? 0);
+                $numeroOc = (int) ($it['numero_oc'] ?? 0);
                 $idEk10 = trim($it['id_ek10'] ?? '');
                 $proveedor = trim($it['proveedor'] ?? '');
-                $totalOc = (float)($it['total_oc'] ?? 0.0);
                 $semana = trim($it['semana'] ?? '');
                 $rubro = trim($it['rubro'] ?? 'MATERIALES');
                 $tipo = trim($it['tipo'] ?? '');
                 $concepto = trim($it['concepto'] ?? '');
                 $creadoPor = trim($it['creado_por'] ?? 'USUARIO');
 
-                // Validar saldo disponible
-                $yaProg = (float)DB::table('programaciones_oc')
-                    ->where('empresa', $empresa)
-                    ->where('centro_costos', $centroCostos)
-                    ->where('numero_oc', $numeroOc)
-                    ->sum('monto_programado');
+                $saldo = self::obtenerTotalYSaldoDisponible($empresa, $centroCostos, $numeroOc);
+                $totalOc = $saldo['total_oc'];
+                $saldoDisp = $saldo['saldo_disponible'];
+                self::validarMontoContraSaldo($monto, $saldoDisp, $numeroOc);
 
-                $saldoDisp = max(0.0, $totalOc - $yaProg);
-
-                if ($saldoDisp <= 0.009) {
-                    if (!empty($archivos)) {
-                        throw new InvalidArgumentException("La OC #{$numeroOc} ya no tiene saldo disponible para guardar el pago y sus documentos");
-                    }
-                    continue;
-                }
-
-                if (!empty($archivos)) {
+                if (! empty($archivos)) {
                     $docsExistentes = DB::table('documentos_oc')
                         ->where('empresa', $empresa)
                         ->where('centro_costos', $centroCostos)
@@ -401,18 +467,16 @@ class OrdenesService
                     }
                 }
 
-                $monto = min($monto, $saldoDisp);
-
                 // Validar XML si hay documentos
                 $totalXml = null;
-                $xmls = array_filter($archivos, fn($f) => str_ends_with(strtolower($f->getClientOriginalName()), '.xml'));
-                if (!empty($xmls)) {
+                $xmls = array_filter($archivos, fn ($f) => str_ends_with(strtolower($f->getClientOriginalName()), '.xml'));
+                if (! empty($xmls)) {
                     $totalXml = 0.0;
                     foreach ($xmls as $xml) {
                         $totalXml += DocumentService::extraerTotalFacturaXml($xml);
                     }
                 } elseif (isset($it['total_facturas_xml']) && $it['total_facturas_xml'] !== null && $it['total_facturas_xml'] !== '') {
-                    $totalXml = (float)$it['total_facturas_xml'];
+                    $totalXml = (float) $it['total_facturas_xml'];
                 }
 
                 DocumentService::validarTotalXmlMenorPago($totalXml, $monto, $numeroOc);
@@ -434,7 +498,7 @@ class OrdenesService
                     'estado_envio' => 'PENDIENTE',
                 ]);
 
-                if (!empty($archivos)) {
+                if (! empty($archivos)) {
                     $guardadosDocs = DocumentService::guardarDocumentos(
                         $archivos,
                         $empresa,
@@ -446,6 +510,16 @@ class OrdenesService
                     );
                     $totalDocumentos += count($guardadosDocs);
                 }
+
+                app(OrdenSeguimientoService::class)->registrarActividadSistema(
+                    $empresa,
+                    $centroCostos,
+                    $numeroOc,
+                    'PAGO_PROGRAMADO',
+                    'Pago programado por $'.number_format($monto, 2),
+                    Session::has('usuario_id') ? (int) Session::get('usuario_id') : null,
+                    (string) Session::get('usuario_nombre', $creadoPor)
+                );
 
                 $guardados++;
                 $totalMonto += $monto;
@@ -467,7 +541,7 @@ class OrdenesService
 
         return [
             'status' => 'ok',
-            'mensaje' => "Se guardaron {$guardados} pagos pendientes por un total de $" . number_format($totalMonto, 2) . ". Aún no se enviaron a BI.",
+            'mensaje' => "Se guardaron {$guardados} pagos pendientes por un total de $".number_format($totalMonto, 2).'. Aún no se enviaron a BI.',
             'guardados' => $guardados,
             'total_monto' => round($totalMonto, 2),
             'documentos_guardados' => $totalDocumentos,
@@ -481,16 +555,16 @@ class OrdenesService
         self::asegurarColumnaEstadoEnvio();
 
         $fila = DB::table('programaciones_oc')->where('id', $idProgramacion)->first();
-        if (!$fila) {
-            throw new InvalidArgumentException("No se encontró el pago guardado");
+        if (! $fila) {
+            throw new InvalidArgumentException('No se encontró el pago guardado');
         }
         if ($fila->estado_envio !== 'PENDIENTE') {
-            throw new InvalidArgumentException("Este pago ya fue enviado a BI");
+            throw new InvalidArgumentException('Este pago ya fue enviado a BI');
         }
 
-        $insertados = BIService::insertarLote([(array)$fila]);
+        $insertados = BIService::insertarLote([(array) $fila]);
         if ($insertados !== 1) {
-            throw new Exception("No se pudo enviar el pago a BI. El pago permanece pendiente para reintentar.");
+            throw new Exception('No se pudo enviar el pago a BI. El pago permanece pendiente para reintentar.');
         }
 
         DB::table('programaciones_oc')
@@ -498,9 +572,19 @@ class OrdenesService
             ->where('estado_envio', 'PENDIENTE')
             ->update(['estado_envio' => 'ENVIADO']);
 
+        app(OrdenSeguimientoService::class)->registrarActividadSistema(
+            (string) $fila->empresa,
+            (string) $fila->centro_costos,
+            (int) $fila->numero_oc,
+            'PAGO_ENVIADO_BI',
+            'Pago enviado a BI por $'.number_format((float) $fila->monto_programado, 2),
+            Session::has('usuario_id') ? (int) Session::get('usuario_id') : null,
+            (string) Session::get('usuario_nombre', $fila->creado_por ?? 'SISTEMA')
+        );
+
         return [
             'status' => 'ok',
-            'mensaje' => "Pago de $" . number_format((float)$fila->monto_programado, 2) . " enviado a BI correctamente",
+            'mensaje' => 'Pago de $'.number_format((float) $fila->monto_programado, 2).' enviado a BI correctamente',
             'id' => $idProgramacion,
         ];
     }
@@ -510,8 +594,8 @@ class OrdenesService
         self::asegurarColumnaEstadoEnvio();
 
         $programacion = DB::table('programaciones_oc')->where('id', $idAbono)->first();
-        if (!$programacion) {
-            throw new InvalidArgumentException("No se encontró el pago programado");
+        if (! $programacion) {
+            throw new InvalidArgumentException('No se encontró el pago programado');
         }
 
         $replicarEliminacionBi = ($programacion->estado_envio === 'ENVIADO');
@@ -519,7 +603,7 @@ class OrdenesService
 
         DB::beginTransaction();
         try {
-            if (!$replicarEliminacionBi) {
+            if (! $replicarEliminacionBi) {
                 $docs = DB::table('documentos_oc')
                     ->where('id_abono', $idAbono)
                     ->pluck('ruta_archivo')
@@ -531,6 +615,16 @@ class OrdenesService
 
             DB::table('programaciones_oc')->where('id', $idAbono)->delete();
 
+            app(OrdenSeguimientoService::class)->registrarActividadSistema(
+                $empresa,
+                $centroCostos,
+                $numeroOc,
+                'PAGO_ELIMINADO',
+                'Pago programado eliminado por $'.number_format((float) $programacion->monto_programado, 2),
+                Session::has('usuario_id') ? (int) Session::get('usuario_id') : null,
+                (string) Session::get('usuario_nombre', $programacion->creado_por ?? 'SISTEMA')
+            );
+
             $progs = DB::table('programaciones_oc')
                 ->select('id', 'monto_programado', 'semana', 'rubro', 'concepto', 'creado_por', 'creado_en')
                 ->where('empresa', $empresa)
@@ -538,7 +632,7 @@ class OrdenesService
                 ->where('numero_oc', $numeroOc)
                 ->orderBy('id', 'asc')
                 ->get()
-                ->map(fn($p) => (array)$p)
+                ->map(fn ($p) => (array) $p)
                 ->toArray();
 
             $pagadoAcum = array_sum(array_column($progs, 'monto_programado'));
@@ -550,7 +644,7 @@ class OrdenesService
             throw $e;
         }
 
-        if (!empty($archivosPendientesEliminados)) {
+        if (! empty($archivosPendientesEliminados)) {
             DocumentService::limpiarArchivos($archivosPendientesEliminados);
         }
 
@@ -558,7 +652,7 @@ class OrdenesService
             try {
                 BIService::eliminarAbono($empresa, $centroCostos, $numeroOc);
             } catch (Exception $e) {
-                Log::error("[BI ERROR] Error al eliminar de SQL Server: " . $e->getMessage());
+                Log::error('[BI ERROR] Error al eliminar de SQL Server: '.$e->getMessage());
             }
         }
 

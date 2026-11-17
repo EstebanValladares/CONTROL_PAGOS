@@ -205,6 +205,10 @@ Al presentar cada OC, la aplicación también lee `programaciones_oc` para calcu
 
 `saldo disponible = importe de la OC - suma de montos programados`
 
+Al guardar, el backend vuelve a calcular ese saldo con el total sincronizado de
+`ordenes_compra_ek9`, incluye programaciones pendientes y rechaza cualquier monto que
+lo exceda. El total que envía el navegador no se toma como fuente de verdad.
+
 ## 5. Tablas que consume o mantiene la aplicación
 
 | Tabla SQLite | Origen / escritura | Función |
@@ -212,6 +216,8 @@ Al presentar cada OC, la aplicación también lee `programaciones_oc` para calcu
 | `ordenes_compra_ek9` | Sincronizador de Enkontrol | Datos de cabecera y clasificación de las OCs que alimentan la vista principal. |
 | `programaciones_oc` | Escritura de Flask al guardar pagos | Cada pago programado; incluye empresa, obra, número OC, importe, semana, rubro, concepto y quién lo registró. |
 | `documentos_oc` | Escritura de Flask cuando la carga está habilitada | Metadatos de archivos asociados a una OC y a un abono. La consulta del tablero cuenta los documentos por empresa + obra + OC. |
+| `oc_seguimientos` | Escritura de Laravel | Responsable, estado de seguimiento y fecha de inicio del monitor; separada de las tablas sincronizadas de Enkontrol. |
+| `oc_movimientos` | Escritura de Laravel | Notas, cambios de estado, reasignaciones y actividad de pagos para la bitácora local. |
 | `usuarios_ek9` | Script independiente de sincronización de usuarios | Usuarios, empresa, puesto, plaza y estatus usados por el login. |
 | `pagos` | `datos/pagos.csv`, mediante `indexador.py` | Datos de la sección de conciliación y fuente local usada para sugerir plaza en la sincronización de usuarios. |
 | `cat_semanas_ek9` | Leída por órdenes y conciliación | Etiquetas y fechas de semana para filtros y semana oficial de corte. El origen que la carga no está identificado en el flujo de sincronización descrito aquí. |
@@ -225,6 +231,8 @@ Al presentar cada OC, la aplicación también lee `programaciones_oc` para calcu
 erDiagram
     ORDENES_COMPRA_EK9 ||--o{ PROGRAMACIONES_OC : "empresa + centro_costos + numero_oc"
     ORDENES_COMPRA_EK9 ||--o{ DOCUMENTOS_OC : "empresa + centro_costos + numero_oc"
+    ORDENES_COMPRA_EK9 ||--o| OC_SEGUIMIENTOS : "empresa + centro_costos + numero_oc"
+    OC_SEGUIMIENTOS ||--o{ OC_MOVIMIENTOS : "empresa + centro_costos + numero_oc"
     PROGRAMACIONES_OC o|--o{ DOCUMENTOS_OC : "id_abono si se conserva"
     PAGOS }o..o| USUARIOS_EK9 : "ENVIADO POR / nombre para sugerir plaza"
     CAT_SEMANAS_EK9 ||..o{ ORDENES_COMPRA_EK9 : "rango de fechas para filtro"
@@ -232,6 +240,14 @@ erDiagram
 ```
 
 La relación entre la OC y sus programaciones/documentos se consulta mediante los tres campos indicados, no mediante una llave foránea declarada. `documentos_oc` también almacena `id_abono`; sin embargo, el conteo que muestra la tabla de guardados se calcula por empresa, obra y OC. `pagos` y `usuarios_ek9` no tienen una llave relacional formal: el script de usuarios compara nombres de responsable para inferir la plaza predominante.
+
+El monitor de OCs crea su línea base local al inicializarse: no supone que los datos
+sincronizados de Enkontrol sean movimientos de seguimiento y no modifica las tablas
+fuente. El estatus `C` de Enkontrol se excluye por corresponder a OCs canceladas.
+Notas, cambios de estado y pagos capturados en la aplicación actualizan la actividad;
+una reasignación conserva el contador de inactividad. Instalarlo requiere
+ejecutar solo `php artisan migrate --path=database\migrations\2026_11_17_155519_create_oc_follow_up_tables.php`
+contra la conexión SQLite configurada para Laravel.
 
 ## 6. Documentos adjuntos y modo de pruebas
 

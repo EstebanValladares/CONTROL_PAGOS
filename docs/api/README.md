@@ -12,7 +12,42 @@
 | `POST` | `/api/sincronizar` | `sincronizacion` | Disparo manual o programado del sync con EK9 |
 | `POST` | `/api/indexador/reindexar` | `indexador` | Reconstrucción de índices B-Tree y optimización SQLite |
 | `POST` | `/api/ordenes/programar-lote` | `ordenes` | Guarda pagos pendientes localmente y sus documentos; no los envía a BI |
+| `POST` | `/api/ordenes/programar-abono` | `ordenes` | Registra un abono individual después de validar el saldo real de la OC |
 | `POST` | `/api/ordenes/programaciones/<id>/enviar` | `ordenes` | Envía a BI un pago pendiente de la tabla GUARDADO |
+| `GET` | `/api/ordenes/seguimiento` | `seguimiento` | Monitor paginado de OCs asignadas, en limbo o sin responsable (solo Administración) |
+| `GET` | `/api/ordenes/seguimiento/compradoras` | `seguimiento` | Compradoras activas disponibles para reasignar (solo rol `ADMIN`) |
+| `GET` | `/api/ordenes/seguimiento/historial` | `seguimiento` | Bitácora de actividad de una OC visible para su responsable o Administración |
+| `POST` | `/api/ordenes/seguimiento/nota` | `seguimiento` | Registra actividad manual en una OC asignada |
+| `POST` | `/api/ordenes/seguimiento/estado` | `seguimiento` | Actualiza el estado de seguimiento con motivo |
+| `POST` | `/api/ordenes/seguimiento/reasignar-cartera` | `seguimiento` | Reasigna hasta 100 OCs a una compradora activa (solo rol `ADMIN`) |
+
+---
+
+## Seguimiento y reasignación de OCs
+
+El monitor guarda responsables e historial en `oc_seguimientos` y `oc_movimientos`,
+tablas nuevas de la SQLite local de Laravel. No modifica `ordenes_compra_ek9`,
+`usuarios_ek9`, Enkontrol ni BI. Las OCs existentes comienzan su conteo cuando se
+inicializa el monitor; no se atribuye actividad histórica que la aplicación no podía
+observar. Las OCs cuyo estatus de Enkontrol es `C` (Cancelada) se excluyen. La
+sincronización periódica de Enkontrol no reinicia ese conteo.
+
+Una OC entra en limbo al superar estrictamente 60 días sin una nota, cambio de estado
+o actividad de pago registrada desde Control de Pagos. CERRADA y CANCELADA quedan
+fuera de la alerta. La reasignación se registra en la bitácora, requiere motivo y no
+reinicia el contador. Los empleados se autorizan con el ID guardado en la sesión del
+servidor: la compradora solo puede actualizar sus OCs asignadas y únicamente las
+sesiones cuyo rol sea `ADMIN` pueden consultar el catálogo de compradoras o reasignar
+carteras. El permiso administrativo funcional no basta para reasignar.
+
+Para instalar estas tablas en la SQLite configurada por Laravel, ejecutar desde la
+carpeta `CONTROL_PAGOS_OC` únicamente esta migración:
+
+```powershell
+php artisan migrate --path=database\migrations\2026_11_17_155519_create_oc_follow_up_tables.php
+```
+
+No ejecutar `migrate:fresh` ni editar la base de Enkontrol para habilitar el monitor.
 
 ---
 
@@ -29,6 +64,12 @@ cerrar sesión. El icono de envío de cada fila llama a
 `POST /api/ordenes/programaciones/<id>/enviar`; solo entonces se replica el pago a BI
 y se cambia su estado a `ENVIADO`. Si BI no confirma la inserción, el pago permanece
 pendiente y la interfaz permite reintentar.
+
+Antes de guardar, el servidor obtiene el importe de la OC desde `ordenes_compra_ek9`
+y resta todas las programaciones existentes, incluidas las pendientes de envío a BI.
+No confía en el `total_oc` enviado por el navegador. Si un monto supera el saldo
+disponible, rechaza la solicitud y no guarda parcialmente el lote. La misma validación
+se aplica al endpoint individual de abono.
 
 La migración agrega `estado_envio` a `programaciones_oc` si aún no existe. Los
 registros anteriores se consideran `ENVIADO`; los pagos nuevos se guardan como

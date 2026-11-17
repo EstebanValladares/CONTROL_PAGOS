@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Session;
 class AuthService
 {
     protected static array $usuariosAutorizadosBorrar = [
-        "CLAUDIA SARAI PADILLA RAMIREZ",
-        "LUIS SOTERO CRUZ GOMEZ",
-        "ARTURO VILLANUEVA GUERRERO",
-        "PEDRO PEREZ GUZMAN",
-        "PEDRO PEREZ",
-        "YEUDIEL ESTEBAN RICHARD PEREZ",
-        "SANTOS PEREZ TOLENTINO",
-        "IRMA MIREYA MOLINA CAZARES",
-        "LUIS ANGEL PERNAS SUAREZ",
+        'CLAUDIA SARAI PADILLA RAMIREZ',
+        'LUIS SOTERO CRUZ GOMEZ',
+        'ARTURO VILLANUEVA GUERRERO',
+        'PEDRO PEREZ GUZMAN',
+        'PEDRO PEREZ',
+        'YEUDIEL ESTEBAN RICHARD PEREZ',
+        'SANTOS PEREZ TOLENTINO',
+        'IRMA MIREYA MOLINA CAZARES',
+        'LUIS ANGEL PERNAS SUAREZ',
     ];
 
     public static function normalizarTexto(?string $texto): string
@@ -28,29 +28,31 @@ class AuthService
         // Quitar acentos
         $texto = strtr($texto, [
             'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
-            'Ü' => 'U', 'Ñ' => 'N'
+            'Ü' => 'U', 'Ñ' => 'N',
         ]);
+
         return preg_replace('/\s+/', ' ', $texto);
     }
 
     public static function puedeBorrarPagosProgramados(?string $nombre): bool
     {
         $norm = self::normalizarTexto($nombre);
+
         return in_array($norm, self::$usuariosAutorizadosBorrar, true);
     }
 
     public static function esUsuarioAdministradorAutorizado(?string $nombre = '', ?string $email = '', $empId = null, ?string $rol = ''): bool
     {
-        if (strtoupper(trim((string)$rol)) === 'ADMIN') {
+        if (strtoupper(trim((string) $rol)) === 'ADMIN') {
             return true;
         }
 
-        if ($empId !== null && in_array((int)$empId, [18, 120, 166, 3399, 9119], true)) {
+        if ($empId !== null && in_array((int) $empId, [18, 120, 166, 3399, 9119], true)) {
             return true;
         }
 
         $nom = self::normalizarTexto($nombre);
-        $em = strtolower(trim((string)$email));
+        $em = strtolower(trim((string) $email));
 
         $emailsAutorizados = [
             'claudia.padilla@grupovelas.com',
@@ -101,7 +103,7 @@ class AuthService
         $usuario = trim($usuario);
         $password = trim($password);
         $empresa = strtoupper(trim($empresa));
-        if (!in_array($empresa, ['ARYVE', 'VELAS'], true)) {
+        if (! in_array($empresa, ['ARYVE', 'VELAS'], true)) {
             $empresa = 'ARYVE';
         }
 
@@ -109,7 +111,7 @@ class AuthService
             return [
                 'status' => 'error',
                 'codigo' => 400,
-                'mensaje' => 'Ingresa tu usuario y contraseña'
+                'mensaje' => 'Ingresa tu usuario y contraseña',
             ];
         }
 
@@ -120,6 +122,9 @@ class AuthService
                 Session::put('usuario_nombre', 'ADMINISTRADOR');
                 Session::put('usuario_rol', 'ADMIN');
                 Session::put('usuario_empresa', $empresa);
+                Session::put('usuario_id', 0);
+                Session::put('usuario_email', 'admin@grupovelas.com');
+                Session::put('usuario_admin_funcional', true);
 
                 return [
                     'status' => 'ok',
@@ -136,13 +141,13 @@ class AuthService
                         'es_admin_funcional' => true,
                         'puede_borrar_pagos' => false,
                         'permiso_borrar_pagos_version' => 2,
-                    ]
+                    ],
                 ];
             } else {
                 return [
                     'status' => 'error',
                     'codigo' => 401,
-                    'mensaje' => 'Contraseña de administrador incorrecta'
+                    'mensaje' => 'Contraseña de administrador incorrecta',
                 ];
             }
         }
@@ -153,38 +158,39 @@ class AuthService
             ->where('empresa', $empresa);
 
         if (ctype_digit($usuario)) {
-            $query->where('empleado', (int)$usuario);
+            $query->where('empleado', (int) $usuario);
         } else {
             $query->where(function ($q) use ($usuario) {
                 $q->whereRaw('LOWER(email) = ?', [strtolower($usuario)])
-                  ->orWhereRaw('LOWER(nombre) = ?', [strtolower($usuario)]);
+                    ->orWhereRaw('LOWER(nombre) = ?', [strtolower($usuario)]);
             });
         }
 
         $fila = $query->first();
 
-        if (!$fila) {
+        if (! $fila) {
             $nombreGrupo = ($empresa === 'VELAS') ? 'Grupo Velas' : 'Construcciones Aryve';
+
             return [
                 'status' => 'error',
                 'codigo' => 401,
-                'mensaje' => "El usuario no se encuentra disponible en {$nombreGrupo}. Verifica la empresa seleccionada o tu número de empleado."
+                'mensaje' => "El usuario no se encuentra disponible en {$nombreGrupo}. Verifica la empresa seleccionada o tu número de empleado.",
             ];
         }
 
-        if (strtoupper(trim((string)($fila->estatus ?? 'A'))) === 'B') {
+        if (strtoupper(trim((string) ($fila->estatus ?? 'A'))) === 'B') {
             return [
                 'status' => 'error',
                 'codigo' => 403,
-                'mensaje' => 'Acceso restringido: Tu usuario se encuentra inactivo (Estatus B) en el sistema EnKontrol. Contacta a Sistemas o Administración.'
+                'mensaje' => 'Acceso restringido: Tu usuario se encuentra inactivo (Estatus B) en el sistema EnKontrol. Contacta a Sistemas o Administración.',
             ];
         }
 
-        if (trim((string)($fila->password ?? '')) !== $password) {
+        if (trim((string) ($fila->password ?? '')) !== $password) {
             return [
                 'status' => 'error',
                 'codigo' => 401,
-                'mensaje' => 'Contraseña incorrecta. El acceso no se encuentra disponible con estas credenciales.'
+                'mensaje' => 'Contraseña incorrecta. El acceso no se encuentra disponible con estas credenciales.',
             ];
         }
 
@@ -200,6 +206,9 @@ class AuthService
         Session::put('usuario_nombre', $fila->nombre);
         Session::put('usuario_rol', $fila->rol);
         Session::put('usuario_empresa', $fila->empresa);
+        Session::put('usuario_id', (int) $fila->empleado);
+        Session::put('usuario_email', (string) $fila->email);
+        Session::put('usuario_admin_funcional', $esAdminFunc);
 
         return [
             'status' => 'ok',
@@ -216,7 +225,7 @@ class AuthService
                 'es_admin_funcional' => $esAdminFunc,
                 'puede_borrar_pagos' => $puedeBorrar,
                 'permiso_borrar_pagos_version' => 2,
-            ]
+            ],
         ];
     }
 

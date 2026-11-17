@@ -1,4 +1,5 @@
     const { createApp } = Vue;
+    let sincronizacionOrdenesVivoEnCurso = null;
 
     createApp({
       data() {
@@ -79,13 +80,36 @@
           // Estado reactivo para Órdenes de Compra
           ordenesVivo: [],
           cargandoVivo: false,
+          sincronizandoOrdenesVivo: false,
+          sincronizacionOrdenesVivoFallida: false,
+          solicitudOrdenesVivo: 0,
+          solicitudCargaOrdenesVivo: 0,
+          ordenesSeguimiento: [],
+          cargandoSeguimiento: false,
+          seguimientoExpandido: false,
+          filtroSeguimiento: 'todas',
+          paginaSeguimiento: 1,
+          totalPaginasSeguimiento: 1,
+          resumenSeguimiento: { limbo: 0, sin_responsable: 0, total: 0 },
+          compradorasSeguimiento: [],
+          ordenesSeguimientoSeleccionadas: [],
+          mostrarModalSeguimiento: false,
+          accionSeguimiento: '',
+          ocSeguimientoSeleccionada: null,
+          notaSeguimiento: '',
+          estadoSeguimiento: 'ABIERTA',
+          responsableSeguimientoId: '',
+          motivoReasignacion: '',
+          historialSeguimientoOC: null,
+          historialSeguimiento: [],
+          cargandoHistorialSeguimiento: false,
           kpisVivo: {
             ordenes_hoy: 0,
             monto_hoy: 0,
             total_acumulado: 0,
             monto_acumulado: 0
           },
-          filtroVivoTemporal: '',
+          filtroVivoTemporal: 'HOY',
           filtroVivoSemana: '',
           filtroVivoMisOrdenes: true,
           filtroVivoBusqueda: '',
@@ -161,6 +185,15 @@
         puedeBorrarPagos() {
           return Boolean(this.puedeBorrarPagosSesion);
         },
+        esAdminSeguimiento() {
+          return this.puedeReasignarCartera;
+        },
+        puedeReasignarCartera() {
+          return Boolean(this.perfilUsuario && (
+            String(this.perfilUsuario.rol || '').trim().toUpperCase() === 'ADMIN'
+            || (Number(this.perfilUsuario.id) === 3399 && this.perfilUsuario.es_admin_funcional)
+          ));
+        },
         calculoDiferencia() {
           const imp = Number(this.formProgramar.importe) || 0;
           const pag = Number(this.formProgramar.pagando) || 0;
@@ -195,6 +228,9 @@
         },
         ordenesListasParaGuardar() {
           return (this.ordenesFiltradasObra || []).filter(o => Number(o.inputMonto) > 0);
+        },
+        ordenesConMontoExcedido() {
+          return this.ordenesListasParaGuardar.filter(oc => this.excedeSaldoDisponible(oc));
         },
         totalMontoLote() {
           return this.ordenesListasParaGuardar.reduce((acc, o) => acc + Number(o.inputMonto || 0), 0);
@@ -232,18 +268,18 @@
             if (!oc.inputSemana) oc.inputSemana = semDefecto;
           }
         },
-        validarMontoMaximo(oc) {
-          const saldo = (oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total;
-          if (saldo <= 0.009) {
-            oc.inputMonto = null;
-            return;
-          }
-          if (oc.inputMonto > saldo) {
-            oc.inputMonto = Number(saldo.toFixed(2));
-            this.dispararToastAdvertencia(`El saldo máximo disponible para programar en la OC #${oc.numero_oc} es $${this.formatearNumero(saldo)}`);
-          } else if (oc.inputMonto < 0) {
-            oc.inputMonto = 0;
-          }
+        excedeSaldoDisponible(oc) {
+          const monto = Number(oc.inputMonto);
+          const saldo = Number(
+            oc.saldo_disponible !== undefined && oc.saldo_disponible !== null
+              ? oc.saldo_disponible
+              : oc.total
+          );
+          if (!Number.isFinite(monto) || monto <= 0) return false;
+          const montoCentavos = monto * 100;
+          return !Number.isFinite(saldo)
+            || Math.abs(montoCentavos - Math.round(montoCentavos)) > 0.000001
+            || montoCentavos > saldo * 100 + 0.000001;
         },
         aplicarPagarTodo(oc) {
           const saldo = (oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total;
@@ -306,6 +342,16 @@
             this.dispararToastError('No hay órdenes con monto capturado para programar');
             return;
           }
+          const ocExcedida = this.ordenesConMontoExcedido[0];
+          if (ocExcedida) {
+            const saldo = ocExcedida.saldo_disponible !== undefined && ocExcedida.saldo_disponible !== null
+              ? ocExcedida.saldo_disponible
+              : ocExcedida.total;
+            this.dispararToastError(
+              `El monto de la OC #${ocExcedida.numero_oc} supera su saldo disponible de $${this.formatearNumero(saldo)}`
+            );
+            return;
+          }
           this.guardandoLote = true;
           try {
             const items = lista.map(o => ({
@@ -332,12 +378,7 @@
               for (const xml of xmls) {
                 totalEscalado += await this.obtenerTotalFacturaXmlEscalado(xml);
               }
-              const saldoRaw = lista[indice].saldo_disponible;
-              const saldoDisponible = Number(saldoRaw);
-              const importePago = saldoRaw !== null && saldoRaw !== undefined && Number.isFinite(saldoDisponible)
-                ? Math.min(Number(items[indice].monto_programado), saldoDisponible)
-                : Number(items[indice].monto_programado);
-              const importeEscalado = BigInt(Math.round(importePago * 1000000));
+              const importeEscalado = BigInt(Math.round(Number(items[indice].monto_programado) * 1000000));
               if (totalEscalado >= importeEscalado) {
                 throw new Error(
                   `La suma de las facturas XML de la OC #${items[indice].numero_oc} ` +
@@ -355,7 +396,7 @@
               items.forEach((item, indice) => {
                 const archivos = this.archivosPendientesPorOC[this.claveDocumentosOC(item)] || [];
                 documentosEnLote += archivos.length;
-                archivos.forEach(archivo => formData.append(`archivos_${indice}`, archivo));
+                archivos.forEach(archivo => formData.append(`archivos_${indice}[]`, archivo));
               });
             } else {
               documentosEnLote = items.reduce((total, item) =>
@@ -861,6 +902,8 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.vistaActiva = vista;
           if (vista === 'ORDENES_VIVO') {
             this.cargarOrdenesVivo(1);
+            this.cargarSeguimiento(1);
+            this.cargarCompradorasSeguimiento();
           } else {
             this.cargarDatos(1);
           }
@@ -885,7 +928,7 @@ async cargarProgramacionesSemana(silencioso = false) {
         },
         onCambioSemanaCorteFiltro() {
           if (this.filtroVivoSemana) {
-            this.filtroVivoTemporal = '';
+            this.filtroVivoTemporal = 'SEMANA';
             this.semanaCorteMasiva = this.filtroVivoSemana;
           }
           this.cargarOrdenesVivo(1);
@@ -901,7 +944,51 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.filtroVivoObra = obra;
           this.aplicarFiltroObra();
         },
+        async sincronizarOrdenesVivo() {
+          if (!sincronizacionOrdenesVivoEnCurso) {
+            this.sincronizandoOrdenesVivo = true;
+            sincronizacionOrdenesVivoEnCurso = (async () => {
+              try {
+                const respuesta = await fetch('/api/ordenes/sincronizar', { method: 'POST' });
+                const contenido = await respuesta.text();
+                let data = {};
+                try {
+                  data = contenido ? JSON.parse(contenido) : {};
+                } catch (error) {
+                  data = {};
+                }
+                if (!respuesta.ok || data.status !== 'ok') {
+                  throw new Error(
+                    data.mensaje
+                    || (respuesta.ok
+                      ? 'La sincronización devolvió una respuesta inválida.'
+                      : `La sincronización falló (HTTP ${respuesta.status}).`)
+                  );
+                }
+                this.sincronizacionOrdenesVivoFallida = false;
+                return data;
+              } catch (error) {
+                this.sincronizacionOrdenesVivoFallida = true;
+                throw error;
+              }
+            })();
+          }
+
+          const sincronizacionActual = sincronizacionOrdenesVivoEnCurso;
+          try {
+            return await sincronizacionActual;
+          } finally {
+            if (sincronizacionOrdenesVivoEnCurso === sincronizacionActual) {
+              sincronizacionOrdenesVivoEnCurso = null;
+              this.sincronizandoOrdenesVivo = false;
+            }
+          }
+        },
         async cargarOrdenesVivo(pagina = 1, silencioso = false) {
+          if (silencioso && (this.sincronizandoOrdenesVivo || this.sincronizacionOrdenesVivoFallida)) return;
+
+          const solicitudCargaActual = silencioso ? null : ++this.solicitudCargaOrdenesVivo;
+          let solicitudActual = ++this.solicitudOrdenesVivo;
           if (!this.filtroVivoSemana) {
             this.ordenesVivo = [];
             this.totalFiltradoVivo = 0;
@@ -912,10 +999,15 @@ async cargarProgramacionesSemana(silencioso = false) {
           }
           if (!silencioso) {
             this.cargandoVivo = true;
-            fetch('/api/ordenes/sincronizar', { method: 'POST' }).catch(() => {});
           }
           this.paginaVivo = pagina;
           try {
+            if (!silencioso) {
+              await this.sincronizarOrdenesVivo();
+              if (solicitudCargaActual !== this.solicitudCargaOrdenesVivo) return;
+              solicitudActual = ++this.solicitudOrdenesVivo;
+            }
+
             const params = new URLSearchParams({
               pagina: pagina,
               limite: 50,
@@ -932,6 +1024,10 @@ async cargarProgramacionesSemana(silencioso = false) {
 
             const res = await fetch('/api/ordenes-recientes?' + params.toString());
             const data = await res.json();
+            if (!res.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudieron cargar las órdenes recientes.');
+            }
+            if (solicitudActual !== this.solicitudOrdenesVivo) return;
             if (data.status === 'ok') {
               const nuevosDatos = data.datos || [];
               for (const oc of nuevosDatos) {
@@ -942,7 +1038,11 @@ async cargarProgramacionesSemana(silencioso = false) {
               if (silencioso) {
                 const idsActuales = this.ordenesVivo.map(o => o.id).join(',');
                 const idsNuevos = nuevosDatos.map(o => o.id).join(',');
-                if (idsActuales !== idsNuevos || this.kpisVivo.ordenes_hoy !== (data.kpis?.ordenes_hoy || 0)) {
+                if (
+                  idsActuales !== idsNuevos
+                  || this.kpisVivo.ordenes_hoy !== (data.kpis?.ordenes_hoy || 0)
+                  || this.kpisVivo.monto_hoy !== (data.kpis?.monto_hoy || 0)
+                ) {
                   this.ordenesVivo = nuevosDatos;
                   this.kpisVivo = data.kpis || this.kpisVivo;
                   this.totalPaginasVivo = data.total_paginas || 1;
@@ -960,10 +1060,218 @@ async cargarProgramacionesSemana(silencioso = false) {
               await this.cargarProgramacionesSemana();
             }
           } catch (e) {
-            console.error('Error cargando órdenes en vivo:', e);
+            if (
+              (solicitudCargaActual === null && solicitudActual === this.solicitudOrdenesVivo)
+              || solicitudCargaActual === this.solicitudCargaOrdenesVivo
+            ) {
+              console.error('Error cargando órdenes en vivo:', e);
+              if (!silencioso) {
+                this.dispararToastError(e.message || 'No se pudieron actualizar las órdenes.');
+              }
+            }
           } finally {
-            this.cargandoVivo = false;
+            if (
+              (solicitudCargaActual === null && solicitudActual === this.solicitudOrdenesVivo)
+              || solicitudCargaActual === this.solicitudCargaOrdenesVivo
+            ) {
+              this.cargandoVivo = false;
+            }
           }
+        },
+        claveOrdenSeguimiento(oc) {
+          return `${oc.empresa}|${oc.centro_costos}|${oc.numero_oc}`;
+        },
+        seguimientoSeleccionado(oc) {
+          const clave = this.claveOrdenSeguimiento(oc);
+          return this.ordenesSeguimientoSeleccionadas.some(item => this.claveOrdenSeguimiento(item) === clave);
+        },
+        alternarSeleccionSeguimiento(oc) {
+          const clave = this.claveOrdenSeguimiento(oc);
+          const existe = this.ordenesSeguimientoSeleccionadas.some(item => this.claveOrdenSeguimiento(item) === clave);
+          this.ordenesSeguimientoSeleccionadas = existe
+            ? this.ordenesSeguimientoSeleccionadas.filter(item => this.claveOrdenSeguimiento(item) !== clave)
+            : [...this.ordenesSeguimientoSeleccionadas, oc];
+        },
+        seleccionarPaginaSeguimiento() {
+          const seleccionados = new Map(this.ordenesSeguimientoSeleccionadas.map(item => [this.claveOrdenSeguimiento(item), item]));
+          for (const oc of this.ordenesSeguimiento) {
+            if (seleccionados.size >= 100) break;
+            seleccionados.set(this.claveOrdenSeguimiento(oc), oc);
+          }
+          this.ordenesSeguimientoSeleccionadas = Array.from(seleccionados.values());
+        },
+        async cargarSeguimiento(pagina = 1) {
+          if (!this.usuarioActivo || !this.puedeReasignarCartera) return;
+          this.cargandoSeguimiento = true;
+          this.paginaSeguimiento = pagina;
+          try {
+            const params = new URLSearchParams({
+              empresa: this.empresaActiva,
+              pagina: String(pagina),
+              limite: '5',
+              filtro: this.filtroSeguimiento
+            });
+            const res = await fetch('/api/ordenes/seguimiento?' + params.toString());
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudo cargar el monitor de seguimiento.');
+            }
+            this.ordenesSeguimiento = data.datos || [];
+            this.totalPaginasSeguimiento = data.total_paginas || 1;
+            this.resumenSeguimiento = data.resumen || { limbo: 0, sin_responsable: 0, total: 0 };
+          } catch (error) {
+            console.error('Error cargando el seguimiento de OCs:', error);
+            this.dispararToastError(error.message || 'No se pudo cargar el monitor de seguimiento.');
+          } finally {
+            this.cargandoSeguimiento = false;
+          }
+        },
+        async cargarCompradorasSeguimiento() {
+          if (!this.puedeReasignarCartera) return;
+          try {
+            const res = await fetch('/api/ordenes/seguimiento/compradoras');
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudo cargar el catálogo de compradoras.');
+            }
+            this.compradorasSeguimiento = data.datos || [];
+          } catch (error) {
+            console.error('Error cargando compradoras activas:', error);
+            this.dispararToastError(error.message || 'No se pudo cargar el catálogo de compradoras.');
+          }
+        },
+        cambiarFiltroSeguimiento(filtro) {
+          this.filtroSeguimiento = filtro;
+          this.paginaSeguimiento = 1;
+          this.ordenesSeguimientoSeleccionadas = [];
+          this.cargarSeguimiento(1);
+        },
+        abrirModalSeguimiento(accion, oc = null) {
+          this.accionSeguimiento = accion;
+          this.ocSeguimientoSeleccionada = oc;
+          this.notaSeguimiento = '';
+          this.estadoSeguimiento = oc ? (oc.estado_seguimiento || 'ABIERTA') : 'ABIERTA';
+          this.responsableSeguimientoId = '';
+          this.motivoReasignacion = '';
+          this.mostrarModalSeguimiento = true;
+          if (accion === 'reasignar' && !this.compradorasSeguimiento.length) {
+            this.cargarCompradorasSeguimiento();
+          }
+        },
+        cerrarModalSeguimiento() {
+          this.mostrarModalSeguimiento = false;
+          this.ocSeguimientoSeleccionada = null;
+        },
+        async guardarNotaSeguimiento() {
+          const nota = this.notaSeguimiento.trim();
+          if (nota.length < 3 || !this.ocSeguimientoSeleccionada) {
+            this.dispararToastError('Escribe una nota de al menos 3 caracteres.');
+            return;
+          }
+          try {
+            const res = await fetch('/api/ordenes/seguimiento/nota', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                centro_costos: this.ocSeguimientoSeleccionada.centro_costos,
+                numero_oc: this.ocSeguimientoSeleccionada.numero_oc,
+                nota
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo registrar la nota.');
+            this.cerrarModalSeguimiento();
+            this.dispararToastExito(data.mensaje);
+            await this.cargarSeguimiento(this.paginaSeguimiento);
+          } catch (error) {
+            this.dispararToastError(error.message || 'No se pudo registrar la nota.');
+          }
+        },
+        async guardarEstadoSeguimiento() {
+          const motivo = this.notaSeguimiento.trim();
+          if (!this.ocSeguimientoSeleccionada || motivo.length < 3) {
+            this.dispararToastError('Escribe el motivo del cambio de estado.');
+            return;
+          }
+          try {
+            const res = await fetch('/api/ordenes/seguimiento/estado', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                centro_costos: this.ocSeguimientoSeleccionada.centro_costos,
+                numero_oc: this.ocSeguimientoSeleccionada.numero_oc,
+                estado: this.estadoSeguimiento,
+                motivo
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo actualizar el estado.');
+            this.cerrarModalSeguimiento();
+            this.dispararToastExito(data.mensaje);
+            await this.cargarSeguimiento(this.paginaSeguimiento);
+          } catch (error) {
+            this.dispararToastError(error.message || 'No se pudo actualizar el estado.');
+          }
+        },
+        async guardarReasignacionSeguimiento() {
+          const ordenes = this.ocSeguimientoSeleccionada
+            ? [this.ocSeguimientoSeleccionada]
+            : this.ordenesSeguimientoSeleccionadas;
+          const motivo = this.motivoReasignacion.trim();
+          if (!ordenes.length || !this.responsableSeguimientoId || motivo.length < 5) {
+            this.dispararToastError('Selecciona una compradora y escribe un motivo de al menos 5 caracteres.');
+            return;
+          }
+          try {
+            const res = await fetch('/api/ordenes/seguimiento/reasignar-cartera', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ordenes: ordenes.map(oc => ({
+                  centro_costos: oc.centro_costos,
+                  numero_oc: oc.numero_oc
+                })),
+                responsable_id: this.responsableSeguimientoId,
+                motivo
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo reasignar la cartera.');
+            this.cerrarModalSeguimiento();
+            this.ordenesSeguimientoSeleccionadas = [];
+            this.dispararToastExito(data.mensaje);
+            await this.cargarSeguimiento(this.paginaSeguimiento);
+          } catch (error) {
+            this.dispararToastError(error.message || 'No se pudo reasignar la cartera.');
+          }
+        },
+        async cargarHistorialSeguimiento(oc) {
+          if (this.historialSeguimientoOC === this.claveOrdenSeguimiento(oc)) {
+            this.historialSeguimientoOC = null;
+            this.historialSeguimiento = [];
+            return;
+          }
+          this.historialSeguimientoOC = this.claveOrdenSeguimiento(oc);
+          this.cargandoHistorialSeguimiento = true;
+          try {
+            const params = new URLSearchParams({
+              centro_costos: oc.centro_costos,
+              numero_oc: String(oc.numero_oc)
+            });
+            const res = await fetch('/api/ordenes/seguimiento/historial?' + params.toString());
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo cargar la bitácora.');
+            this.historialSeguimiento = data.datos || [];
+          } catch (error) {
+            this.dispararToastError(error.message || 'No se pudo cargar la bitácora.');
+          } finally {
+            this.cargandoHistorialSeguimiento = false;
+          }
+        },
+        formatearFechaSeguimiento(fecha) {
+          if (!fecha) return 'Sin registro';
+          const valor = new Date(String(fecha).replace(' ', 'T') + 'Z');
+          return Number.isNaN(valor.getTime()) ? fecha : valor.toLocaleString('es-MX');
         },
         dispararToastError(msg) {
           this.toastMensaje = msg;
@@ -1069,15 +1377,15 @@ async cargarProgramacionesSemana(silencioso = false) {
               if (this.semanaActualOficial?.etiqueta) {
                 this.filtroVivoSemana = this.semanaActualOficial.etiqueta;
                 this.semanaCorteMasiva = this.semanaActualOficial.etiqueta;
-                this.filtroVivoTemporal = '';
+                this.filtroVivoTemporal = this.filtroVivoTemporal || 'HOY';
               } else if (this.listaSemanas.length) {
                 this.filtroVivoSemana = this.listaSemanas[0];
                 this.semanaCorteMasiva = this.listaSemanas[0];
-                this.filtroVivoTemporal = '';
+                this.filtroVivoTemporal = this.filtroVivoTemporal || 'HOY';
               } else {
                 this.filtroVivoSemana = '';
                 this.semanaCorteMasiva = '';
-                this.filtroVivoTemporal = '';
+                this.filtroVivoTemporal = this.filtroVivoTemporal || 'HOY';
               }
               this.kpisGlobales = data.kpis_globales;
             }
@@ -1164,6 +1472,8 @@ async cargarProgramacionesSemana(silencioso = false) {
         if (this.usuarioActivo) {
           if (this.vistaActiva === 'ORDENES_VIVO') {
             await this.cargarOrdenesVivo(1);
+            await this.cargarSeguimiento(1);
+            await this.cargarCompradorasSeguimiento();
             await this.cargarProgramacionesSemana();
           } else {
             await this.cargarDatos(1);
@@ -1178,9 +1488,15 @@ async cargarProgramacionesSemana(silencioso = false) {
         }, 15000);
 
         // Auto-sincronización periódica con Enkontrol cada 60s
-        setInterval(() => {
+        setInterval(async () => {
           if (this.vistaActiva === 'ORDENES_VIVO') {
-            fetch('/api/ordenes/sincronizar', { method: 'POST' }).catch(() => {});
+            try {
+              await this.sincronizarOrdenesVivo();
+              await this.cargarOrdenesVivo(1, true);
+            } catch (error) {
+              console.error('Error en la sincronización periódica de órdenes:', error);
+              this.dispararToastError(error.message || 'No se pudieron sincronizar las órdenes.');
+            }
           }
         }, 60000);
       }

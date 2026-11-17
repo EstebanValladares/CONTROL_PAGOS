@@ -486,11 +486,13 @@
             <!-- Tarjetas KPIs Vivo y Ficha de Datos del Usuario (DISEÑO ULTRA COMPACTO) -->
       <section class="mx-2 sm:mx-5 grid grid-cols-1 lg:grid-cols-12 gap-3 mb-4">
         
-        <!-- Tarjeta Izquierda: ÓRDENES HOY (Compacta) -->
-        <div class="lg:col-span-4 bg-slate-800/90 border border-slate-700/80 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between">
+        <!-- Tarjeta Izquierda: ÓRDENES HOY (Compacta y Clickeable para filtrar) -->
+        <div @click="filtroVivoTemporal = 'HOY'; cargarOrdenesVivo(1)"
+             class="lg:col-span-4 bg-slate-800/90 border border-slate-700/80 hover:border-emerald-500/60 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between cursor-pointer transition group"
+             title="Clic para ver sólo las órdenes del día de hoy; este contador no es el total de OCs activas">
           <div>
             <div class="flex items-center gap-2 mb-0.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 group-hover:text-emerald-300">
                 <i class="fa-regular fa-calendar-check text-xs"></i> ÓRDENES HOY
               </span>
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -541,6 +543,160 @@
 
       </section>
 
+      <!-- Monitor local de seguimiento y cartera sin responsable -->
+      <section v-if="puedeReasignarCartera" class="mx-2 sm:mx-5 mb-5 overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-800/90 shadow-xl">
+        <button type="button" @click="seguimientoExpandido = !seguimientoExpandido"
+                :aria-expanded="seguimientoExpandido" aria-controls="seguimiento-ocs-panel"
+                class="flex w-full flex-wrap items-center gap-2 border-b border-slate-700 bg-slate-800 px-4 py-3 text-left hover:bg-slate-700/70">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15 text-amber-300">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </span>
+          <span class="text-sm font-black uppercase tracking-wide text-white">Seguimiento de OCs</span>
+          <span class="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[11px] font-bold text-indigo-200">{{ resumenSeguimiento.total }} OCs monitoreadas</span>
+          <span class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-300">Sin movimiento &gt;60 días: {{ resumenSeguimiento.limbo }}</span>
+          <span v-if="esAdminSeguimiento" class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-bold text-amber-200">Sin responsable: {{ resumenSeguimiento.sin_responsable }}</span>
+          <i class="fa-solid ml-auto text-slate-400" :class="seguimientoExpandido ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </button>
+        <div v-if="seguimientoExpandido" id="seguimiento-ocs-panel">
+        <div class="flex flex-col gap-3 border-b border-slate-700 p-4 lg:flex-row lg:items-center lg:justify-between">
+          <p class="text-[11px] text-slate-400">El contador inicia cuando se activa este monitor; la reasignación no reinicia la inactividad.</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" @click="cambiarFiltroSeguimiento('todas')"
+                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
+                    :class="filtroSeguimiento === 'todas' ? 'bg-indigo-600 text-white' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+              {{ esAdminSeguimiento ? 'Todas las OCs' : 'Mis OCs asignadas' }}
+            </button>
+            <button type="button" @click="cambiarFiltroSeguimiento('limbo')"
+                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
+                    :class="filtroSeguimiento === 'limbo' ? 'bg-rose-600 text-white' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+              Más de 60 días
+            </button>
+            <button v-if="esAdminSeguimiento" type="button" @click="cambiarFiltroSeguimiento('sin_responsable')"
+                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
+                    :class="filtroSeguimiento === 'sin_responsable' ? 'bg-amber-500 text-slate-950' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+              Sin responsable
+            </button>
+            <button type="button" @click="cargarSeguimiento(paginaSeguimiento)" :disabled="cargandoSeguimiento"
+                    class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-slate-700 disabled:opacity-50">
+              <i class="fa-solid fa-rotate" :class="{ 'fa-spin': cargandoSeguimiento }"></i>
+              Actualizar
+            </button>
+            <button v-if="puedeReasignarCartera && ordenesSeguimientoSeleccionadas.length"
+                    type="button" @click="abrirModalSeguimiento('reasignar')"
+                    class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950 transition hover:bg-amber-400">
+              Reasignar seleccionadas ({{ ordenesSeguimientoSeleccionadas.length }})
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1050px] text-left text-xs">
+            <thead class="bg-slate-900 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <tr>
+                <th v-if="puedeReasignarCartera" class="px-3 py-2">
+                  <button type="button" @click="seleccionarPaginaSeguimiento" class="text-indigo-300 hover:text-white">Seleccionar página</button>
+                </th>
+                <th class="px-3 py-2">OC / Obra</th>
+                <th class="px-3 py-2">Proveedor</th>
+                <th class="px-3 py-2">Responsable</th>
+                <th class="px-3 py-2">Estado</th>
+                <th class="px-3 py-2">Última actividad</th>
+                <th class="px-3 py-2 text-center">Inactividad</th>
+                <th class="px-3 py-2 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/70">
+              <tr v-if="cargandoSeguimiento && !ordenesSeguimiento.length">
+                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-indigo-300">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando seguimiento...
+                </td>
+              </tr>
+              <tr v-else-if="!ordenesSeguimiento.length">
+                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-slate-500">
+                  No hay órdenes para este filtro.
+                </td>
+              </tr>
+              <template v-for="oc in ordenesSeguimiento" :key="claveOrdenSeguimiento(oc)">
+                <tr class="hover:bg-slate-700/30">
+                  <td v-if="puedeReasignarCartera" class="px-3 py-2">
+                    <input type="checkbox" :checked="seguimientoSeleccionado(oc)"
+                           :disabled="!seguimientoSeleccionado(oc) && ordenesSeguimientoSeleccionadas.length >= 100"
+                           @change="alternarSeleccionSeguimiento(oc)" aria-label="Seleccionar OC para reasignar cartera">
+                  </td>
+                  <td class="px-3 py-2">
+                    <strong class="text-white">#{{ oc.numero_oc }}</strong>
+                    <span class="ml-1 text-slate-400">{{ oc.centro_costos }}</span>
+                  </td>
+                  <td class="max-w-[220px] truncate px-3 py-2 text-slate-300" :title="oc.proveedor">{{ oc.proveedor || 'Sin proveedor' }}</td>
+                  <td class="px-3 py-2" :class="oc.responsable_nombre ? 'text-slate-200' : 'font-bold text-amber-300'">
+                    {{ oc.responsable_nombre || 'Sin responsable' }}
+                  </td>
+                  <td class="px-3 py-2">
+                    <span class="rounded-md border px-2 py-1 text-[10px] font-bold"
+                          :class="['CERRADA', 'CANCELADA'].includes(oc.estado_seguimiento) ? 'border-slate-600 bg-slate-700 text-slate-300' : (oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300')">
+                      {{ oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'ESPERA PROVEEDOR' : oc.estado_seguimiento }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-slate-300">
+                    {{ formatearFechaSeguimiento(oc.ultima_actividad) }}
+                    <span v-if="!oc.ultimo_movimiento_tipo" class="ml-1 text-[10px] text-slate-500">Inicio del monitor</span>
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <span class="rounded-md px-2 py-1 font-black"
+                          :class="oc.en_limbo ? 'bg-rose-500/15 text-rose-300' : 'bg-slate-700 text-slate-200'">
+                      {{ oc.dias_sin_movimiento }} días
+                    </span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <div class="flex justify-end gap-1.5">
+                      <button type="button" @click="cargarHistorialSeguimiento(oc)" class="rounded-md bg-slate-700 px-2 py-1 text-slate-200 hover:bg-slate-600" title="Ver bitácora">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                      <button type="button" @click="abrirModalSeguimiento('nota', oc)" class="rounded-md bg-indigo-600/20 px-2 py-1 text-indigo-200 hover:bg-indigo-600" title="Registrar movimiento">
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      <button type="button" @click="abrirModalSeguimiento('estado', oc)" class="rounded-md bg-emerald-600/20 px-2 py-1 text-emerald-200 hover:bg-emerald-600" title="Cambiar estado">
+                        <i class="fa-solid fa-flag"></i>
+                      </button>
+                      <button v-if="puedeReasignarCartera" type="button" @click="abrirModalSeguimiento('reasignar', oc)" class="rounded-md bg-amber-500/20 px-2 py-1 text-amber-200 hover:bg-amber-500 hover:text-slate-950" title="Reasignar OC">
+                        <i class="fa-solid fa-user-gear"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="historialSeguimientoOC === claveOrdenSeguimiento(oc)" class="bg-slate-900/70">
+                  <td :colspan="puedeReasignarCartera ? 8 : 7" class="px-4 py-3">
+                    <div v-if="cargandoHistorialSeguimiento" class="text-center text-indigo-300">Cargando bitácora...</div>
+                    <div v-else-if="!historialSeguimiento.length" class="text-center text-slate-500">Sin movimientos registrados desde que inició el monitor.</div>
+                    <div v-else class="space-y-2">
+                      <div v-for="(movimiento, indice) in historialSeguimiento" :key="indice" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
+                        <div>
+                          <strong class="text-indigo-200">{{ movimiento.tipo }}</strong>
+                          <span class="ml-2 text-slate-300">{{ movimiento.descripcion || 'Sin detalle' }}</span>
+                          <span v-if="movimiento.metadata && movimiento.metadata.responsable_anterior_nombre" class="ml-2 text-amber-200">
+                            {{ movimiento.metadata.responsable_anterior_nombre }} → {{ movimiento.metadata.responsable_nuevo_nombre }}
+                          </span>
+                        </div>
+                        <span class="text-[10px] text-slate-400">{{ movimiento.usuario_nombre || 'Sistema' }} · {{ formatearFechaSeguimiento(movimiento.creado_en) }}</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between border-t border-slate-700 px-4 py-2 text-xs text-slate-400">
+          <span>{{ resumenSeguimiento.total }} OC(s) en seguimiento</span>
+          <div class="flex items-center gap-2">
+            <button type="button" @click="cargarSeguimiento(paginaSeguimiento - 1)" :disabled="paginaSeguimiento <= 1 || cargandoSeguimiento" class="rounded bg-slate-700 px-2 py-1 disabled:opacity-40">Anterior</button>
+            <span>Página {{ paginaSeguimiento }} de {{ totalPaginasSeguimiento }}</span>
+            <button type="button" @click="cargarSeguimiento(paginaSeguimiento + 1)" :disabled="paginaSeguimiento >= totalPaginasSeguimiento || cargandoSeguimiento" class="rounded bg-slate-700 px-2 py-1 disabled:opacity-40">Siguiente</button>
+          </div>
+        </div>
+        </div>
+      </section>
+
 <!-- Barra de Filtros de OCs en Vivo -->
             <!-- BARRA UNIFICADA DE FILTROS Y ACCIONES DE PROGRAMACIÓN -->
       <section class="mx-2 sm:mx-5 bg-gradient-to-r from-slate-800 via-slate-850 to-slate-800 border-2 border-emerald-500/30 p-4 rounded-2xl shadow-2xl mb-5 space-y-3.5">
@@ -571,6 +727,22 @@
                   {{ s === (semanaActualOficial && semanaActualOficial.etiqueta) ? s + ' (En Curso)' : s }}
                 </option>
               </select>
+            </div>
+
+            <!-- Selector Rápido: Sólo Hoy vs Toda la Semana -->
+            <div class="flex items-center self-end bg-slate-900 border border-slate-700 rounded-lg p-0.5 shadow-inner">
+              <button type="button" @click="filtroVivoTemporal = 'HOY'; cargarOrdenesVivo(1)"
+                      class="px-2.5 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                      :class="filtroVivoTemporal === 'HOY' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'">
+                <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-white' : 'bg-emerald-400'"></span>
+                <span>Sólo Hoy ({{ kpisVivo.ordenes_hoy }})</span>
+              </button>
+              <button type="button" @click="filtroVivoTemporal = 'SEMANA'; cargarOrdenesVivo(1)"
+                      class="px-2.5 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                      :class="filtroVivoTemporal !== 'HOY' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'">
+                <i class="fa-solid fa-calendar-days text-[10px]"></i>
+                <span>Toda la Semana</span>
+              </button>
             </div>
 
             <!-- Buscador y botón refrescar -->
@@ -651,7 +823,7 @@
               </div>
             </div>
 
-            <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0"
+            <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0 || ordenesConMontoExcedido.length > 0"
                     class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-xl shadow-emerald-500/30 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider">
               <i class="fa-solid" :class="guardandoLote ? 'fa-spinner fa-spin' : 'fa-floppy-disk text-sm'"></i>
               <span>{{ guardandoLote ? 'PREPARANDO LOTE...' : 'GUARDAR TODO (' + ordenesListasParaGuardar.length + ')' }}</span>
@@ -813,12 +985,14 @@
                       <input type="number" step="0.01" min="0" 
                              :max="(oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total"
                              v-model.number="oc.inputMonto"
-                             @input="validarMontoMaximo(oc)"
                              :disabled="(oc.saldo_disponible !== undefined && oc.saldo_disponible <= 0.009)"
                              :placeholder="(oc.saldo_disponible !== undefined && oc.saldo_disponible <= 0.009) ? 'PAGADO 100%' : '0.00'"
                              class="w-full bg-slate-900 border rounded-lg pl-5 pr-2 py-1.5 text-xs font-mono font-extrabold text-right focus:outline-none focus:ring-2 focus:ring-emerald-400 transition disabled:opacity-40 disabled:bg-slate-950 disabled:cursor-not-allowed disabled:text-slate-500"
-                             :class="Number(oc.inputMonto) > 0 ? 'border-emerald-500 bg-emerald-950/30 text-emerald-300 shadow-sm shadow-emerald-500/20' : 'border-slate-700 text-slate-300'">
+                             :class="excedeSaldoDisponible(oc) ? 'border-rose-500 bg-rose-950/30 text-rose-300' : (Number(oc.inputMonto) > 0 ? 'border-emerald-500 bg-emerald-950/30 text-emerald-300 shadow-sm shadow-emerald-500/20' : 'border-slate-700 text-slate-300')">
                     </div>
+                    <p v-if="excedeSaldoDisponible(oc)" class="mt-1 text-[10px] font-semibold text-rose-300">
+                      Excede el saldo disponible: ${{ formatearNumero((oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total) }}
+                    </p>
                   </td>
                   <!-- 9. DIFERENCIA ($) / SALDO RESTANTE -->
                   <td class="py-2 px-3 text-right font-mono font-bold whitespace-nowrap">
@@ -1567,6 +1741,86 @@
       </div>
     </div>
 
+    <div v-if="mostrarModalSeguimiento" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-xl rounded-2xl border border-slate-600 bg-slate-800 p-5 text-slate-100 shadow-2xl">
+        <div class="mb-4 flex items-start justify-between border-b border-slate-700 pb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Bitácora de seguimiento</span>
+            <h3 class="mt-1 text-base font-black text-white">
+              <span v-if="accionSeguimiento === 'nota'">Registrar movimiento</span>
+              <span v-else-if="accionSeguimiento === 'estado'">Actualizar estado de la OC</span>
+              <span v-else>Reasignar cartera de OCs</span>
+            </h3>
+            <p class="mt-1 text-xs text-slate-400">
+              <span v-if="ocSeguimientoSeleccionada">OC #{{ ocSeguimientoSeleccionada.numero_oc }} · {{ ocSeguimientoSeleccionada.centro_costos }}</span>
+              <span v-else>{{ ordenesSeguimientoSeleccionadas.length }} OC(s) seleccionadas</span>
+            </p>
+          </div>
+          <button type="button" @click="cerrarModalSeguimiento" class="text-slate-400 hover:text-white" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div v-if="accionSeguimiento === 'nota'" class="space-y-2">
+          <label class="text-xs font-bold text-slate-300">¿Qué seguimiento se realizó?</label>
+          <textarea v-model="notaSeguimiento" rows="4" maxlength="1000"
+                    placeholder="Ej. Se confirmó con el proveedor la entrega para el viernes..."
+                    class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+        </div>
+
+        <div v-else-if="accionSeguimiento === 'estado'" class="space-y-3">
+          <div>
+            <label class="mb-1 block text-xs font-bold text-slate-300">Estado</label>
+            <select v-model="estadoSeguimiento" class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white">
+              <option value="ABIERTA">Abierta</option>
+              <option value="EN_ESPERA_PROVEEDOR">En espera del proveedor</option>
+              <option value="CERRADA">Cerrada</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-bold text-slate-300">Motivo / nota</label>
+            <textarea v-model="notaSeguimiento" rows="3" maxlength="1000" placeholder="Describe por qué cambia el estado..."
+                      class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div>
+            <label class="mb-1 block text-xs font-bold text-slate-300">Asignar a compradora activa</label>
+            <select v-model="responsableSeguimientoId" class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white">
+              <option value="">Selecciona una compradora</option>
+              <option v-for="compradora in compradorasSeguimiento" :key="compradora.id" :value="compradora.id">
+                {{ compradora.nombre }} ({{ compradora.id }})
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-bold text-slate-300">Motivo de reasignación</label>
+            <textarea v-model="motivoReasignacion" rows="3" maxlength="1000" placeholder="Ej. Reasignación por cambio de puesto de la responsable..."
+                      class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+          </div>
+          <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-100">
+            La reasignación quedará registrada en la bitácora, pero no reiniciará los días sin actividad.
+          </p>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2 border-t border-slate-700 pt-4">
+          <button type="button" @click="cerrarModalSeguimiento" class="rounded-lg bg-slate-700 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-600">
+            Cancelar
+          </button>
+          <button v-if="accionSeguimiento === 'nota'" type="button" @click="guardarNotaSeguimiento" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-500">
+            Guardar movimiento
+          </button>
+          <button v-else-if="accionSeguimiento === 'estado'" type="button" @click="guardarEstadoSeguimiento" class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-500">
+            Guardar estado
+          </button>
+          <button v-else type="button" @click="guardarReasignacionSeguimiento" class="rounded-lg bg-amber-500 px-4 py-2 text-xs font-black text-slate-950 hover:bg-amber-400">
+            Confirmar reasignación
+          </button>
+        </div>
+      </div>
+    </div>
   </div> <!-- Fin de #app -->
 @endverbatim
 
@@ -1594,6 +1848,6 @@
     })();
   </script>
   <!-- Aplicación Vue 3 Modular -->
-  <script src="{{ asset('js/app.js') }}?v=2.3"></script>
+  <script src="{{ asset('js/app.js') }}?v=2.9"></script>
 </body>
 </html>

@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\OrdenesController;
-use App\Http\Controllers\PagosController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MetricasController;
+use App\Http\Controllers\OrdenesController;
+use App\Http\Controllers\OrdenSeguimientoController;
+use App\Http\Controllers\PagosController;
+use Illuminate\Support\Facades\Route;
 
 // Vista Principal SPA
 Route::get('/', [HomeController::class, 'index']);
@@ -29,6 +30,14 @@ Route::prefix('api')->group(function () {
     Route::post('/ordenes/programar-lote', [OrdenesController::class, 'programarLote']);
     Route::post('/ordenes/programaciones/{id}/enviar', [OrdenesController::class, 'enviarProgramacionBi']);
     Route::post('/ordenes/sincronizar', [OrdenesController::class, 'sincronizarEnkontrol']);
+
+    // Seguimiento local y reasignación de OCs
+    Route::get('/ordenes/seguimiento', [OrdenSeguimientoController::class, 'index']);
+    Route::get('/ordenes/seguimiento/compradoras', [OrdenSeguimientoController::class, 'compradoras']);
+    Route::get('/ordenes/seguimiento/historial', [OrdenSeguimientoController::class, 'historial']);
+    Route::post('/ordenes/seguimiento/nota', [OrdenSeguimientoController::class, 'nota']);
+    Route::post('/ordenes/seguimiento/estado', [OrdenSeguimientoController::class, 'estado']);
+    Route::post('/ordenes/seguimiento/reasignar-cartera', [OrdenSeguimientoController::class, 'reasignarCartera']);
 
     // Pagos y Conciliación
     Route::get('/filtros', [PagosController::class, 'filtros']);

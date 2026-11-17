@@ -7,13 +7,14 @@ use App\Services\DocumentService;
 use App\Services\OrdenesService;
 use App\Services\PagosService;
 use Exception;
-use InvalidArgumentException;
-use Symfony\Component\Process\Process;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\Process\Process;
 
 class OrdenesController extends Controller
 {
@@ -28,11 +29,12 @@ class OrdenesController extends Controller
                 'busqueda' => $request->query('busqueda', $request->query('q', '')),
                 'obra' => $request->query('obra', ''),
                 'mis_ordenes' => $request->query('mis_ordenes', '1'),
-                'pagina' => (int)$request->query('pagina', 1),
-                'limite' => (int)$request->query('limite', 50),
+                'pagina' => (int) $request->query('pagina', 1),
+                'limite' => (int) $request->query('limite', 50),
             ];
 
             $resultado = OrdenesService::consultarOrdenesRecientes($params);
+
             return response()->json($resultado);
         } catch (Exception $e) {
             return response()->json([
@@ -48,6 +50,7 @@ class OrdenesController extends Controller
         try {
             $empresa = $request->query('empresa', 'ARYVE');
             $obras = OrdenesService::obtenerCatalogoObras($empresa);
+
             return response()->json(['status' => 'ok', 'obras' => $obras]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
@@ -65,6 +68,7 @@ class OrdenesController extends Controller
             ];
 
             $ruta = PagosService::generarCsvConciliado($params);
+
             return response()->download($ruta, 'concentrado_oc_conciliado.csv', [
                 'Content-Type' => 'text/csv; charset=UTF-8',
             ]);
@@ -84,13 +88,13 @@ class OrdenesController extends Controller
             if (empty($archivos)) {
                 return response()->json(['status' => 'error', 'mensaje' => 'No se seleccionaron archivos'], 400);
             }
-            if (!is_array($archivos)) {
+            if (! is_array($archivos)) {
                 $archivos = [$archivos];
             }
 
             $empresa = strtoupper(trim($request->input('empresa', 'ARYVE')));
             $centroCostos = trim($request->input('centro_costos', ''));
-            $numeroOc = (int)$request->input('numero_oc', 0);
+            $numeroOc = (int) $request->input('numero_oc', 0);
             $creadoPor = trim($request->input('creado_por', 'USUARIO'));
 
             // Validar que la OC no tenga ya documentos para evitar duplicados
@@ -115,19 +119,20 @@ class OrdenesController extends Controller
                 null,
                 $creadoPor,
                 $archivosCreados,
-                !empty($centroCostos) && $numeroOc > 0
+                ! empty($centroCostos) && $numeroOc > 0
             );
 
             DocumentService::replicarDocumentos($archivosCreados);
 
             return response()->json([
                 'status' => 'ok',
-                'mensaje' => count($guardados) . " documento(s) adjuntado(s) exitosamente",
+                'mensaje' => count($guardados).' documento(s) adjuntado(s) exitosamente',
                 'guardados' => $guardados,
                 'total_documentos' => count($guardados),
             ]);
         } catch (Exception $e) {
             DocumentService::limpiarArchivos($archivosCreados);
+
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
         }
     }
@@ -137,7 +142,7 @@ class OrdenesController extends Controller
         try {
             $empresa = strtoupper(trim($request->query('empresa', 'ARYVE')));
             $centroCostos = trim($request->query('centro_costos', ''));
-            $numeroOc = (int)$request->query('numero_oc', 0);
+            $numeroOc = (int) $request->query('numero_oc', 0);
 
             $docs = DB::table('documentos_oc')
                 ->select('id', 'nombre_original', 'nombre_guardado', 'tamano_bytes', 'creado_por', 'creado_en')
@@ -157,14 +162,14 @@ class OrdenesController extends Controller
     {
         try {
             $doc = DB::table('documentos_oc')->where('id', $id)->first();
-            if (!$doc) {
+            if (! $doc) {
                 return response()->json(['status' => 'error', 'mensaje' => 'Documento no encontrado'], 404);
             }
 
             $ruta = $doc->ruta_archivo;
-            if (!file_exists($ruta)) {
-                $rutaLocal = DocumentService::getDocsDir() . DIRECTORY_SEPARATOR . $doc->nombre_guardado;
-                $rutaEk = DocumentService::getEnkontrolWebDir() . DIRECTORY_SEPARATOR . $doc->nombre_guardado;
+            if (! file_exists($ruta)) {
+                $rutaLocal = DocumentService::getDocsDir().DIRECTORY_SEPARATOR.$doc->nombre_guardado;
+                $rutaEk = DocumentService::getEnkontrolWebDir().DIRECTORY_SEPARATOR.$doc->nombre_guardado;
                 if (file_exists($rutaLocal)) {
                     $ruta = $rutaLocal;
                 } elseif (file_exists($rutaEk)) {
@@ -185,6 +190,7 @@ class OrdenesController extends Controller
         try {
             $datos = $request->all();
             $res = OrdenesService::programarAbono($datos);
+
             return response()->json($res);
         } catch (InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 400);
@@ -196,26 +202,27 @@ class OrdenesController extends Controller
     public function eliminarAbono(Request $request): JsonResponse
     {
         try {
-            if (!Session::get('usuario_autenticado')) {
+            if (! Session::get('usuario_autenticado')) {
                 return response()->json(['status' => 'error', 'mensaje' => 'No hay sesión de usuario activa'], 401);
             }
 
             $usuarioNombre = Session::get('usuario_nombre', '');
-            if (!AuthService::puedeBorrarPagosProgramados($usuarioNombre)) {
+            if (! AuthService::puedeBorrarPagosProgramados($usuarioNombre)) {
                 return response()->json(['status' => 'error', 'mensaje' => 'No tienes permiso para borrar pagos programados'], 403);
             }
 
-            $idAbono = (int)$request->input('id', 0);
+            $idAbono = (int) $request->input('id', 0);
             $empresa = strtoupper(trim($request->input('empresa', 'ARYVE')));
             $centroCostos = trim($request->input('centro_costos', ''));
-            $numeroOc = (int)$request->input('numero_oc', 0);
-            $totalOc = (float)$request->input('total_oc', 0.0);
+            $numeroOc = (int) $request->input('numero_oc', 0);
+            $totalOc = (float) $request->input('total_oc', 0.0);
 
             if ($idAbono <= 0) {
                 return response()->json(['status' => 'error', 'mensaje' => 'ID de abono no válido'], 400);
             }
 
             $res = OrdenesService::eliminarAbono($idAbono, $empresa, $centroCostos, $numeroOc, $totalOc);
+
             return response()->json($res);
         } catch (InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 400);
@@ -232,6 +239,7 @@ class OrdenesController extends Controller
             $obra = $request->query('obra', '');
 
             $res = OrdenesService::obtenerProgramacionesSemana($empresa, $semana, $obra);
+
             return response()->json($res);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
@@ -248,18 +256,19 @@ class OrdenesController extends Controller
                 $items = $itemsRaw;
             }
 
-            if (!is_array($items) || empty($items)) {
+            if (! is_array($items) || empty($items)) {
                 return response()->json(['status' => 'error', 'mensaje' => 'No se enviaron órdenes para programar'], 400);
             }
 
             $archivosPorItem = [];
             foreach ($items as $indice => $it) {
                 $files = $request->file("archivos_{$indice}", []);
-                if (!is_array($files) && $files !== null) {
+                if (! is_array($files) && $files !== null) {
                     $files = [$files];
                 }
-                if (!empty($files) && (count($files) < 2 || count($files) > 4)) {
+                if (! empty($files) && (count($files) < 2 || count($files) > 4)) {
                     $numOc = $it['numero_oc'] ?? '';
+
                     return response()->json([
                         'status' => 'error',
                         'mensaje' => "Adjunta entre 2 y 4 documentos para la orden #{$numOc}",
@@ -269,6 +278,7 @@ class OrdenesController extends Controller
             }
 
             $res = OrdenesService::programarLote($items, $archivosPorItem);
+
             return response()->json($res);
         } catch (InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 400);
@@ -281,6 +291,7 @@ class OrdenesController extends Controller
     {
         try {
             $res = OrdenesService::enviarProgramacionBi($id);
+
             return response()->json($res);
         } catch (InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 400);
@@ -293,7 +304,7 @@ class OrdenesController extends Controller
     {
         try {
             $script = base_path('sincronizar_ordenes_ek9.py');
-            if (!file_exists($script)) {
+            if (! file_exists($script)) {
                 return response()->json(['status' => 'error', 'mensaje' => 'Script de sincronización no encontrado'], 404);
             }
 
@@ -301,7 +312,7 @@ class OrdenesController extends Controller
             $posibles = [
                 'sys.executable',
                 'python3',
-                'python'
+                'python',
             ];
             foreach ($posibles as $p) {
                 if (file_exists($p)) {
@@ -311,16 +322,34 @@ class OrdenesController extends Controller
             }
 
             $process = new Process([$pythonExec, $script]);
-            $process->setTimeout(30);
+            $process->setTimeout(120);
             $process->run();
+
+            if (! $process->isSuccessful()) {
+                Log::error('Falló la sincronización de órdenes con Enkontrol.', [
+                    'exit_code' => $process->getExitCode(),
+                ]);
+
+                return response()->json([
+                    'status' => 'error',
+                    'mensaje' => 'No se pudieron sincronizar todas las órdenes. Verifica la conexión a Enkontrol y vuelve a intentar.',
+                ], 502);
+            }
 
             return response()->json([
                 'status' => 'ok',
                 'salida' => $process->getOutput(),
-                'exitoso' => $process->isSuccessful()
+                'exitoso' => true,
             ]);
         } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
+            Log::error('No se pudo iniciar la sincronización de órdenes.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'mensaje' => 'No se pudo iniciar la sincronización de órdenes.',
+            ], 500);
         }
     }
 }
