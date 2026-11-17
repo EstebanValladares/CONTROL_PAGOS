@@ -35,7 +35,7 @@ class SyncOrdenesCommand extends Command
             }
         }
 
-        $process = new Process([$pythonExec, $script]);
+        $process = new Process([$pythonExec, $script, "--dias={$dias}"]);
         $process->setTimeout(120);
         $process->run(function ($type, $buffer) {
             $this->output->write($buffer);

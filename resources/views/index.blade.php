@@ -544,46 +544,46 @@
       </section>
 
       <!-- Monitor local de seguimiento y cartera sin responsable -->
-      <section v-if="puedeReasignarCartera" class="mx-2 sm:mx-5 mb-5 overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-800/90 shadow-xl">
+      <section v-if="puedeReasignarCartera" class="mx-2 sm:mx-5 mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <button type="button" @click="seguimientoExpandido = !seguimientoExpandido"
                 :aria-expanded="seguimientoExpandido" aria-controls="seguimiento-ocs-panel"
-                class="flex w-full flex-wrap items-center gap-2 border-b border-slate-700 bg-slate-800 px-4 py-3 text-left hover:bg-slate-700/70">
-          <span class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15 text-amber-300">
+                class="flex w-full flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50/90 px-4 py-3 text-left hover:bg-slate-100/80 transition">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-100 text-amber-700">
             <i class="fa-solid fa-clock-rotate-left"></i>
           </span>
-          <span class="text-sm font-black uppercase tracking-wide text-white">Seguimiento de OCs</span>
-          <span class="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[11px] font-bold text-indigo-200">{{ resumenSeguimiento.total }} OCs monitoreadas</span>
-          <span class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-300">Sin movimiento &gt;60 días: {{ resumenSeguimiento.limbo }}</span>
-          <span v-if="esAdminSeguimiento" class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-bold text-amber-200">Sin responsable: {{ resumenSeguimiento.sin_responsable }}</span>
-          <i class="fa-solid ml-auto text-slate-400" :class="seguimientoExpandido ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          <span class="text-sm font-black uppercase tracking-wide text-slate-800">Seguimiento de OCs</span>
+          <span class="rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700">{{ resumenSeguimiento.total }} OCs monitoreadas</span>
+          <span class="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700">Sin movimiento &gt;60 días: {{ resumenSeguimiento.limbo }}</span>
+          <span v-if="esAdminSeguimiento" class="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-800">Sin responsable: {{ resumenSeguimiento.sin_responsable }}</span>
+          <i class="fa-solid ml-auto text-slate-500" :class="seguimientoExpandido ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </button>
         <div v-if="seguimientoExpandido" id="seguimiento-ocs-panel">
-        <div class="flex flex-col gap-3 border-b border-slate-700 p-4 lg:flex-row lg:items-center lg:justify-between">
-          <p class="text-[11px] text-slate-400">El contador inicia cuando se activa este monitor; la reasignación no reinicia la inactividad.</p>
+        <div class="flex flex-col gap-3 border-b border-slate-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+          <p class="text-[11px] text-slate-500">El contador inicia cuando se activa este monitor; la reasignación no reinicia la inactividad.</p>
           <div class="flex flex-wrap items-center gap-2">
             <button type="button" @click="cambiarFiltroSeguimiento('todas')"
                     class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'todas' ? 'bg-indigo-600 text-white' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+                    :class="filtroSeguimiento === 'todas' ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
               {{ esAdminSeguimiento ? 'Todas las OCs' : 'Mis OCs asignadas' }}
             </button>
             <button type="button" @click="cambiarFiltroSeguimiento('limbo')"
                     class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'limbo' ? 'bg-rose-600 text-white' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+                    :class="filtroSeguimiento === 'limbo' ? 'bg-rose-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
               Más de 60 días
             </button>
             <button v-if="esAdminSeguimiento" type="button" @click="cambiarFiltroSeguimiento('sin_responsable')"
                     class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'sin_responsable' ? 'bg-amber-500 text-slate-950' : 'border border-slate-600 bg-slate-900 text-slate-300 hover:bg-slate-700'">
+                    :class="filtroSeguimiento === 'sin_responsable' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
               Sin responsable
             </button>
             <button type="button" @click="cargarSeguimiento(paginaSeguimiento)" :disabled="cargandoSeguimiento"
-                    class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-slate-700 disabled:opacity-50">
+                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50">
               <i class="fa-solid fa-rotate" :class="{ 'fa-spin': cargandoSeguimiento }"></i>
               Actualizar
             </button>
             <button v-if="puedeReasignarCartera && ordenesSeguimientoSeleccionadas.length"
                     type="button" @click="abrirModalSeguimiento('reasignar')"
-                    class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950 transition hover:bg-amber-400">
+                    class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm transition hover:bg-amber-400">
               Reasignar seleccionadas ({{ ordenesSeguimientoSeleccionadas.length }})
             </button>
           </div>
@@ -591,89 +591,90 @@
 
         <div class="overflow-x-auto">
           <table class="w-full min-w-[1050px] text-left text-xs">
-            <thead class="bg-slate-900 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <thead class="bg-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
               <tr>
-                <th v-if="puedeReasignarCartera" class="px-3 py-2">
-                  <button type="button" @click="seleccionarPaginaSeguimiento" class="text-indigo-300 hover:text-white">Seleccionar página</button>
+                <th v-if="puedeReasignarCartera" class="px-3 py-2.5">
+                  <button type="button" @click="seleccionarPaginaSeguimiento" class="text-indigo-600 hover:text-indigo-800 font-bold">Seleccionar página</button>
                 </th>
-                <th class="px-3 py-2">OC / Obra</th>
-                <th class="px-3 py-2">Proveedor</th>
-                <th class="px-3 py-2">Responsable</th>
-                <th class="px-3 py-2">Estado</th>
-                <th class="px-3 py-2">Última actividad</th>
-                <th class="px-3 py-2 text-center">Inactividad</th>
-                <th class="px-3 py-2 text-right">Acciones</th>
+                <th class="px-3 py-2.5">OC / Obra</th>
+                <th class="px-3 py-2.5">Proveedor</th>
+                <th class="px-3 py-2.5">Responsable</th>
+                <th class="px-3 py-2.5">Estado</th>
+                <th class="px-3 py-2.5">Última actividad</th>
+                <th class="px-3 py-2.5 text-center">Inactividad</th>
+                <th class="px-3 py-2.5 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700/70">
+            <tbody class="divide-y divide-slate-100 bg-white">
               <tr v-if="cargandoSeguimiento && !ordenesSeguimiento.length">
-                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-indigo-300">
+                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-indigo-600 font-semibold">
                   <i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando seguimiento...
                 </td>
               </tr>
               <tr v-else-if="!ordenesSeguimiento.length">
-                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-slate-500">
+                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-slate-400 font-medium">
                   No hay órdenes para este filtro.
                 </td>
               </tr>
               <template v-for="oc in ordenesSeguimiento" :key="claveOrdenSeguimiento(oc)">
-                <tr class="hover:bg-slate-700/30">
-                  <td v-if="puedeReasignarCartera" class="px-3 py-2">
+                <tr class="hover:bg-slate-50/90 transition">
+                  <td v-if="puedeReasignarCartera" class="px-3 py-2.5">
                     <input type="checkbox" :checked="seguimientoSeleccionado(oc)"
                            :disabled="!seguimientoSeleccionado(oc) && ordenesSeguimientoSeleccionadas.length >= 100"
                            @change="alternarSeleccionSeguimiento(oc)" aria-label="Seleccionar OC para reasignar cartera">
                   </td>
-                  <td class="px-3 py-2">
-                    <strong class="text-white">#{{ oc.numero_oc }}</strong>
-                    <span class="ml-1 text-slate-400">{{ oc.centro_costos }}</span>
+                  <td class="px-3 py-2.5">
+                    <strong class="text-slate-900">#{{ oc.numero_oc }}</strong>
+                    <span class="ml-1 font-semibold text-slate-500">{{ oc.centro_costos }}</span>
                   </td>
-                  <td class="max-w-[220px] truncate px-3 py-2 text-slate-300" :title="oc.proveedor">{{ oc.proveedor || 'Sin proveedor' }}</td>
-                  <td class="px-3 py-2" :class="oc.responsable_nombre ? 'text-slate-200' : 'font-bold text-amber-300'">
-                    {{ oc.responsable_nombre || 'Sin responsable' }}
+                  <td class="max-w-[220px] truncate px-3 py-2.5 text-slate-800 font-medium" :title="oc.proveedor">{{ oc.proveedor || 'Sin proveedor' }}</td>
+                  <td class="px-3 py-2.5">
+                    <span v-if="oc.responsable_nombre" class="text-slate-700 font-medium">{{ oc.responsable_nombre }}</span>
+                    <span v-else class="inline-block rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800">Sin responsable</span>
                   </td>
-                  <td class="px-3 py-2">
+                  <td class="px-3 py-2.5">
                     <span class="rounded-md border px-2 py-1 text-[10px] font-bold"
-                          :class="['CERRADA', 'CANCELADA'].includes(oc.estado_seguimiento) ? 'border-slate-600 bg-slate-700 text-slate-300' : (oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300')">
+                          :class="['CERRADA', 'CANCELADA'].includes(oc.estado_seguimiento) ? 'border-slate-300 bg-slate-100 text-slate-600' : (oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-emerald-300 bg-emerald-50 text-emerald-700')">
                       {{ oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'ESPERA PROVEEDOR' : oc.estado_seguimiento }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 text-slate-300">
+                  <td class="px-3 py-2.5 text-slate-600 text-xs">
                     {{ formatearFechaSeguimiento(oc.ultima_actividad) }}
-                    <span v-if="!oc.ultimo_movimiento_tipo" class="ml-1 text-[10px] text-slate-500">Inicio del monitor</span>
+                    <span v-if="!oc.ultimo_movimiento_tipo" class="ml-1 text-[10px] text-slate-400">Inicio del monitor</span>
                   </td>
-                  <td class="px-3 py-2 text-center">
-                    <span class="rounded-md px-2 py-1 font-black"
-                          :class="oc.en_limbo ? 'bg-rose-500/15 text-rose-300' : 'bg-slate-700 text-slate-200'">
+                  <td class="px-3 py-2.5 text-center">
+                    <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-black"
+                          :class="oc.en_limbo ? 'border border-rose-300 bg-rose-50 text-rose-700' : 'border border-slate-200 bg-slate-100 text-slate-700'">
                       {{ oc.dias_sin_movimiento }} días
                     </span>
                   </td>
-                  <td class="px-3 py-2">
+                  <td class="px-3 py-2.5">
                     <div class="flex justify-end gap-1.5">
-                      <button type="button" @click="cargarHistorialSeguimiento(oc)" class="rounded-md bg-slate-700 px-2 py-1 text-slate-200 hover:bg-slate-600" title="Ver bitácora">
+                      <button type="button" @click="cargarHistorialSeguimiento(oc)" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-slate-700 hover:bg-slate-100 shadow-sm transition" title="Ver bitácora">
                         <i class="fa-solid fa-list"></i>
                       </button>
-                      <button type="button" @click="abrirModalSeguimiento('nota', oc)" class="rounded-md bg-indigo-600/20 px-2 py-1 text-indigo-200 hover:bg-indigo-600" title="Registrar movimiento">
+                      <button type="button" @click="abrirModalSeguimiento('nota', oc)" class="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-indigo-700 hover:bg-indigo-100 shadow-sm transition" title="Registrar movimiento">
                         <i class="fa-solid fa-pen"></i>
                       </button>
-                      <button type="button" @click="abrirModalSeguimiento('estado', oc)" class="rounded-md bg-emerald-600/20 px-2 py-1 text-emerald-200 hover:bg-emerald-600" title="Cambiar estado">
+                      <button type="button" @click="abrirModalSeguimiento('estado', oc)" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700 hover:bg-emerald-100 shadow-sm transition" title="Cambiar estado">
                         <i class="fa-solid fa-flag"></i>
                       </button>
-                      <button v-if="puedeReasignarCartera" type="button" @click="abrirModalSeguimiento('reasignar', oc)" class="rounded-md bg-amber-500/20 px-2 py-1 text-amber-200 hover:bg-amber-500 hover:text-slate-950" title="Reasignar OC">
+                      <button v-if="puedeReasignarCartera" type="button" @click="abrirModalSeguimiento('reasignar', oc)" class="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-800 hover:bg-amber-100 shadow-sm transition" title="Reasignar OC">
                         <i class="fa-solid fa-user-gear"></i>
                       </button>
                     </div>
                   </td>
                 </tr>
-                <tr v-if="historialSeguimientoOC === claveOrdenSeguimiento(oc)" class="bg-slate-900/70">
+                <tr v-if="historialSeguimientoOC === claveOrdenSeguimiento(oc)" class="bg-slate-50/90">
                   <td :colspan="puedeReasignarCartera ? 8 : 7" class="px-4 py-3">
-                    <div v-if="cargandoHistorialSeguimiento" class="text-center text-indigo-300">Cargando bitácora...</div>
-                    <div v-else-if="!historialSeguimiento.length" class="text-center text-slate-500">Sin movimientos registrados desde que inició el monitor.</div>
+                    <div v-if="cargandoHistorialSeguimiento" class="text-center text-indigo-600 font-semibold">Cargando bitácora...</div>
+                    <div v-else-if="!historialSeguimiento.length" class="text-center text-slate-400">Sin movimientos registrados desde que inició el monitor.</div>
                     <div v-else class="space-y-2">
-                      <div v-for="(movimiento, indice) in historialSeguimiento" :key="indice" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
+                      <div v-for="(movimiento, indice) in historialSeguimiento" :key="indice" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                         <div>
-                          <strong class="text-indigo-200">{{ movimiento.tipo }}</strong>
-                          <span class="ml-2 text-slate-300">{{ movimiento.descripcion || 'Sin detalle' }}</span>
-                          <span v-if="movimiento.metadata && movimiento.metadata.responsable_anterior_nombre" class="ml-2 text-amber-200">
+                          <strong class="text-indigo-700">{{ movimiento.tipo }}</strong>
+                          <span class="ml-2 text-slate-700">{{ movimiento.descripcion || 'Sin detalle' }}</span>
+                          <span v-if="movimiento.metadata && movimiento.metadata.responsable_anterior_nombre" class="ml-2 font-bold text-amber-700">
                             {{ movimiento.metadata.responsable_anterior_nombre }} → {{ movimiento.metadata.responsable_nuevo_nombre }}
                           </span>
                         </div>
@@ -686,12 +687,12 @@
             </tbody>
           </table>
         </div>
-        <div class="flex items-center justify-between border-t border-slate-700 px-4 py-2 text-xs text-slate-400">
-          <span>{{ resumenSeguimiento.total }} OC(s) en seguimiento</span>
+        <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
+          <span class="font-medium">{{ resumenSeguimiento.total }} OC(s) en seguimiento</span>
           <div class="flex items-center gap-2">
-            <button type="button" @click="cargarSeguimiento(paginaSeguimiento - 1)" :disabled="paginaSeguimiento <= 1 || cargandoSeguimiento" class="rounded bg-slate-700 px-2 py-1 disabled:opacity-40">Anterior</button>
-            <span>Página {{ paginaSeguimiento }} de {{ totalPaginasSeguimiento }}</span>
-            <button type="button" @click="cargarSeguimiento(paginaSeguimiento + 1)" :disabled="paginaSeguimiento >= totalPaginasSeguimiento || cargandoSeguimiento" class="rounded bg-slate-700 px-2 py-1 disabled:opacity-40">Siguiente</button>
+            <button type="button" @click="cargarSeguimiento(paginaSeguimiento - 1)" :disabled="paginaSeguimiento <= 1 || cargandoSeguimiento" class="rounded-lg border border-slate-300 bg-white px-3 py-1 font-bold text-slate-700 hover:bg-slate-100 shadow-sm transition disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed">Anterior</button>
+            <span class="font-semibold text-slate-700">Página {{ paginaSeguimiento }} de {{ totalPaginasSeguimiento }}</span>
+            <button type="button" @click="cargarSeguimiento(paginaSeguimiento + 1)" :disabled="paginaSeguimiento >= totalPaginasSeguimiento || cargandoSeguimiento" class="rounded-lg border border-slate-300 bg-white px-3 py-1 font-bold text-slate-700 hover:bg-slate-100 shadow-sm transition disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed">Siguiente</button>
           </div>
         </div>
         </div>
@@ -699,135 +700,217 @@
 
 <!-- Barra de Filtros de OCs en Vivo -->
             <!-- BARRA UNIFICADA DE FILTROS Y ACCIONES DE PROGRAMACIÓN -->
-      <section class="mx-2 sm:mx-5 bg-gradient-to-r from-slate-800 via-slate-850 to-slate-800 border-2 border-emerald-500/30 p-4 rounded-2xl shadow-2xl mb-5 space-y-3.5">
+      <!-- SECCIÓN PRINCIPAL: FILTROS DE SEMANA + SEMÁFORO DE ANTIGÜEDAD DE PASIVOS -->
+      <section class="mx-2 sm:mx-5 mb-5 grid grid-cols-1 xl:grid-cols-12 gap-3.5 items-stretch">
         
-        <!-- Fila 1: Semana de Corte, búsqueda y refresco -->
-        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          <!-- Semana de Corte + Buscador + Refrescar -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-            <!-- Filtro Semana de Corte -->
-            <div class="min-w-[190px]">
-              <div class="flex items-center justify-between mb-1 px-1">
-                <span class="text-[11px] font-semibold text-slate-400">Semana de Corte</span>
+        <!-- BLOQUE IZQUIERDO: SEMANA DE CORTE Y PROGRAMACIÓN (Compacto y en paleta clara) -->
+        <div class="xl:col-span-7 bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm flex flex-col justify-between space-y-3">
+          
+          <!-- Fila 1: Semana de Corte, selector de temporalidad, buscador y refrescar -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <!-- Filtro Semana de Corte (más compacto) -->
+            <div class="min-w-[155px]">
+              <div class="flex items-center justify-between mb-1 px-0.5">
+                <span class="text-[10px] font-bold text-slate-500 uppercase">Semana de Corte</span>
                 <button v-if="semanaActualOficial" 
                         @click="filtroVivoSemana = semanaActualOficial.etiqueta; semanaCorteMasiva = semanaActualOficial.etiqueta; cargarOrdenesVivo(1)" 
-                        class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 cursor-pointer" 
+                        class="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 cursor-pointer" 
                         :title="'Semana en curso oficial (' + semanaActualOficial.fecha_inicio + ' al ' + semanaActualOficial.fecha_final + ')'">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span>{{ semanaActualOficial.etiqueta }}</span>
                 </button>
               </div>
               <select v-model="filtroVivoSemana" @change="onCambioSemanaCorteFiltro" 
                       :disabled="!listaSemanas.length && !semanaActualOficial"
-                      class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                <option v-if="semanaActualOficial && !listaSemanas.includes(semanaActualOficial.etiqueta)" :value="semanaActualOficial.etiqueta" class="bg-slate-900 text-white">
+                      class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-emerald-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                <option v-if="semanaActualOficial && !listaSemanas.includes(semanaActualOficial.etiqueta)" :value="semanaActualOficial.etiqueta" class="bg-white text-slate-800">
                   {{ semanaActualOficial.etiqueta }} (En Curso)
                 </option>
-                <option v-for="s in listaSemanas" :key="s" :value="s" class="bg-slate-900 text-white">
+                <option v-for="s in listaSemanas" :key="s" :value="s" class="bg-white text-slate-800">
                   {{ s === (semanaActualOficial && semanaActualOficial.etiqueta) ? s + ' (En Curso)' : s }}
                 </option>
               </select>
             </div>
 
             <!-- Selector Rápido: Sólo Hoy vs Toda la Semana -->
-            <div class="flex items-center self-end bg-slate-900 border border-slate-700 rounded-lg p-0.5 shadow-inner">
-              <button type="button" @click="filtroVivoTemporal = 'HOY'; cargarOrdenesVivo(1)"
-                      class="px-2.5 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                      :class="filtroVivoTemporal === 'HOY' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'">
-                <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-white' : 'bg-emerald-400'"></span>
+            <div class="flex items-center self-end bg-slate-100 border border-slate-200 rounded-lg p-0.5 shadow-inner">
+              <button type="button" @click="filtroVivoTemporal = 'HOY'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
+                      class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                      :class="filtroVivoTemporal === 'HOY' && !filtroSemaforoAntiguedad ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
+                <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-white' : 'bg-emerald-500'"></span>
                 <span>Sólo Hoy ({{ kpisVivo.ordenes_hoy }})</span>
               </button>
-              <button type="button" @click="filtroVivoTemporal = 'SEMANA'; cargarOrdenesVivo(1)"
-                      class="px-2.5 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                      :class="filtroVivoTemporal !== 'HOY' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'">
+              <button type="button" @click="filtroVivoTemporal = 'SEMANA'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
+                      class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                      :class="filtroVivoTemporal !== 'HOY' && !filtroSemaforoAntiguedad ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
                 <i class="fa-solid fa-calendar-days text-[10px]"></i>
                 <span>Toda la Semana</span>
               </button>
             </div>
 
             <!-- Buscador y botón refrescar -->
-            <div class="flex items-center gap-2 flex-1 sm:self-end">
+            <div class="flex items-center gap-2 flex-1 self-end">
               <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
                 <input type="text" v-model="filtroVivoBusqueda" @keyup.enter="cargarOrdenesVivo(1)" @input="debounceBusquedaVivo"
-                       placeholder="Buscar por # O.C., Folio EK10, Proveedor, Obra..."
-                       class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                       :placeholder="perfilUsuario && (perfilUsuario.rol === 'ADMIN' || perfilUsuario.es_admin_funcional) ? 'Buscar # OC, Folio, Obra, Comprador/Solicitó...' : 'Buscar por # O.C., Folio EK10, Proveedor, Obra...'"
+                       class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white shadow-xs">
               </div>
-              <button @click="cargarOrdenesVivo(1)" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Refrescar órdenes en tiempo real">
-                <i class="fa-solid fa-rotate" :class="{'fa-spin': cargandoVivo}"></i>
-                <span>Refrescar</span>
+              <button @click="sincronizarOrdenesVivo(true)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs" title="Refrescar órdenes en tiempo real">
+                <i class="fa-solid fa-rotate text-xs text-slate-500" :class="{'fa-spin': cargandoVivo}"></i>
+                <span class="hidden sm:inline">Refrescar</span>
               </button>
             </div>
           </div>
 
-        </div>
-
-        <!-- Fila 2: Barra de Programación (Filtro Obra limpia, Botón 100%, Totalizador y Guardar Todo) -->
-        <div class="pt-2 border-t border-slate-700/60 flex items-center justify-between flex-wrap gap-3">
-          
-          <!-- Lado Izquierdo: Búsqueda de obra y botón Pagar 100% -->
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="relative w-full sm:w-64">
-              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-              <input id="filtro-clave-obra"
-                     v-model="filtroVivoObra"
-                     @change="aplicarFiltroObra"
-                     @focus="mostrarSugerenciasObra = true"
-                     @input="mostrarSugerenciasObra = true"
-                     @keyup.enter="obrasSugeridasVivo.length ? seleccionarObraVivo(obrasSugeridasVivo[0]) : aplicarFiltroObra()"
-                     @keydown.esc="mostrarSugerenciasObra = false"
-                     @blur="mostrarSugerenciasObra = false"
-                     aria-label="Buscar obra"
-                     placeholder="Buscar obra..."
-                     autocomplete="off"
-                     class="w-full rounded-lg border border-slate-700 bg-slate-900/90 py-2 pl-9 pr-9 text-sm text-slate-100 placeholder:text-slate-500 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-              <button v-if="filtroVivoObra" type="button" @click="filtroVivoObra = ''; aplicarFiltroObra()"
-                      class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 transition hover:bg-slate-700 hover:text-white" title="Limpiar búsqueda">
-                <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
-              </button>
-              <div v-if="mostrarSugerenciasObra && obrasSugeridasVivo.length"
-                   class="absolute left-0 top-full z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 p-1 shadow-xl">
-                <button v-for="obra in obrasSugeridasVivo" :key="obra" type="button"
-                        @mousedown.prevent="seleccionarObraVivo(obra)"
-                        class="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-slate-200 transition hover:bg-emerald-500/15 hover:text-emerald-300">
-                  {{ obra }}
+          <!-- Fila 2: Filtro Obra, Pagar 100%, Totalizador y Guardar Todo -->
+          <div class="pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="relative w-44 sm:w-52">
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                <input id="filtro-clave-obra"
+                       v-model="filtroVivoObra"
+                       @change="aplicarFiltroObra"
+                       @focus="mostrarSugerenciasObra = true"
+                       @input="mostrarSugerenciasObra = true"
+                       @keyup.enter="obrasSugeridasVivo.length ? seleccionarObraVivo(obrasSugeridasVivo[0]) : aplicarFiltroObra()"
+                       @keydown.esc="mostrarSugerenciasObra = false"
+                       @blur="mostrarSugerenciasObra = false"
+                       aria-label="Buscar obra"
+                       placeholder="Buscar obra..."
+                       autocomplete="off"
+                       class="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-7 pr-7 text-xs text-slate-800 placeholder:text-slate-400 shadow-xs transition focus:border-emerald-500 focus:bg-white focus:outline-none">
+                <button v-if="filtroVivoObra" type="button" @click="filtroVivoObra = ''; aplicarFiltroObra()"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" title="Limpiar búsqueda">
+                  <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
+                <div v-if="mostrarSugerenciasObra && obrasSugeridasVivo.length"
+                     class="absolute left-0 top-full z-30 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-xl">
+                  <button v-for="obra in obrasSugeridasVivo" :key="obra" type="button"
+                          @mousedown.prevent="seleccionarObraVivo(obra)"
+                          class="block w-full rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
+                    {{ obra }}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <!-- Botones de Acción Masiva -->
-            <div class="flex items-center gap-2">
+              <!-- Botones de Acción Masiva -->
               <button type="button" @click="llenarTodasConSaldo" 
-                      class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                      class="px-2.5 py-1.5 bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
                       title="Poner el 100% de saldo a todas las órdenes visibles">
-                <i class="fa-solid fa-bolt-lightning text-xs"></i>
-                <span>Pagar Todo al 100%</span>
+                <i class="fa-solid fa-bolt-lightning text-xs text-emerald-600"></i>
+                <span>Pagar 100%</span>
               </button>
               <button type="button" @click="limpiarTodosLosInputs" v-if="ordenesListasParaGuardar.length > 0"
-                      class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs transition cursor-pointer"
+                      class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition cursor-pointer"
                       title="Limpiar montos capturados">
                 <i class="fa-solid fa-eraser"></i>
-                <span>Limpiar</span>
+              </button>
+            </div>
+
+            <!-- Totalizador y Guardar -->
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  CAPTURADAS: <strong class="text-slate-800">{{ ordenesListasParaGuardar.length }}</strong> de {{ ordenesFiltradasObra.length }}
+                </div>
+                <div class="text-lg font-mono font-extrabold text-emerald-600 leading-tight">
+                  ${{ formatearNumero(totalMontoLote) }}
+                </div>
+              </div>
+
+              <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0 || ordenesConMontoExcedido.length > 0"
+                      class="px-3.5 py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider">
+                <i class="fa-solid" :class="guardandoLote ? 'fa-spinner fa-spin' : 'fa-floppy-disk text-xs'"></i>
+                <span>{{ guardandoLote ? 'GUARDANDO...' : 'GUARDAR (' + ordenesListasParaGuardar.length + ')' }}</span>
               </button>
             </div>
           </div>
+        </div>
 
-          <!-- Lado Derecho: Totalizador y Botón Guardar Todo (sin emoji) -->
-          <div class="flex items-center gap-4">
-            <div class="text-right">
-              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                CAPTURADAS PARA PAGO: <strong class="text-white">{{ ordenesListasParaGuardar.length }}</strong> de {{ ordenesFiltradasObra.length }}
-              </div>
-              <div class="text-xl font-mono font-extrabold text-emerald-300">
-                ${{ formatearNumero(totalMontoLote) }}
-              </div>
+        <!-- BLOQUE DERECHO: TARJETAS DEL SEMÁFORO DE ANTIGÜEDAD DE PASIVOS -->
+        <div class="xl:col-span-5 bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Semáforo de Antigüedad (Pasivos)</h3>
             </div>
-
-            <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0 || ordenesConMontoExcedido.length > 0"
-                    class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-xl shadow-emerald-500/30 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider">
-              <i class="fa-solid" :class="guardandoLote ? 'fa-spinner fa-spin' : 'fa-floppy-disk text-sm'"></i>
-              <span>{{ guardandoLote ? 'PREPARANDO LOTE...' : 'GUARDAR TODO (' + ordenesListasParaGuardar.length + ')' }}</span>
+            <button v-if="filtroSemaforoAntiguedad" @click="filtrarPorSemaforo('')" 
+                    class="text-xs font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 underline cursor-pointer"
+                    title="Quitar filtro de antigüedad">
+              <i class="fa-solid fa-filter-circle-xmark"></i> Quitar Filtro ({{ filtroSemaforoAntiguedad }})
             </button>
+            <span v-else class="text-[10px] text-slate-500">Clic en tarjeta para priorizar</span>
+          </div>
+
+          <!-- Cuadrícula de 4 Tarjetas de Semáforo (Paleta Limpia y Letras Claras) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            
+            <!-- 1. Tarjeta VERDE (30d) -->
+            <button type="button" @click="filtrarPorSemaforo('VERDE')"
+                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
+                    :class="filtroSemaforoAntiguedad === 'VERDE' ? 'bg-emerald-100 border-2 border-emerald-600 ring-2 ring-emerald-500/40 shadow-sm' : 'bg-emerald-50/80 border-2 border-emerald-300/80 hover:border-emerald-500 hover:bg-emerald-100/60'">
+              <div class="flex items-center justify-between text-xs font-black text-emerald-800 mb-1">
+                <span class="flex items-center gap-1">🟢 30d</span>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-200 text-emerald-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.verde.cantidad }}</span>
+              </div>
+              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.verde.monto)">
+                ${{ formatearNumero(conteoSemaforo.verde.monto) }}
+              </div>
+            </button>
+
+            <!-- 2. Tarjeta AMARILLO (30-90d) -->
+            <button type="button" @click="filtrarPorSemaforo('AMARILLO')"
+                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
+                    :class="filtroSemaforoAntiguedad === 'AMARILLO' ? 'bg-amber-100 border-2 border-amber-600 ring-2 ring-amber-500/40 shadow-sm' : 'bg-amber-50/80 border-2 border-amber-300/80 hover:border-amber-500 hover:bg-amber-100/60'">
+              <div class="flex items-center justify-between text-xs font-black text-amber-800 mb-1">
+                <span class="flex items-center gap-1">🟡 30-90d</span>
+                <span class="px-2 py-0.5 rounded-md bg-amber-200 text-amber-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.amarillo.cantidad }}</span>
+              </div>
+              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.amarillo.monto)">
+                ${{ formatearNumero(conteoSemaforo.amarillo.monto) }}
+              </div>
+            </button>
+
+            <!-- 3. Tarjeta NARANJA (90-180d) -->
+            <button type="button" @click="filtrarPorSemaforo('NARANJA')"
+                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
+                    :class="filtroSemaforoAntiguedad === 'NARANJA' ? 'bg-orange-100 border-2 border-orange-600 ring-2 ring-orange-500/40 shadow-sm' : 'bg-orange-50/80 border-2 border-orange-300/80 hover:border-orange-500 hover:bg-orange-100/60'">
+              <div class="flex items-center justify-between text-xs font-black text-orange-800 mb-1">
+                <span class="flex items-center gap-1">🟠 90-180d</span>
+                <span class="px-2 py-0.5 rounded-md bg-orange-200 text-orange-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.naranja.cantidad }}</span>
+              </div>
+              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.naranja.monto)">
+                ${{ formatearNumero(conteoSemaforo.naranja.monto) }}
+              </div>
+            </button>
+
+            <!-- 4. Tarjeta ROJO (180d) -->
+            <button type="button" @click="filtrarPorSemaforo('ROJO')"
+                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
+                    :class="filtroSemaforoAntiguedad === 'ROJO' ? 'bg-rose-100 border-2 border-rose-600 ring-2 ring-rose-500/40 shadow-sm' : 'bg-rose-50/80 border-2 border-rose-300/80 hover:border-rose-500 hover:bg-rose-100/60'">
+              <div class="flex items-center justify-between text-xs font-black text-rose-800 mb-1">
+                <span class="flex items-center gap-1">🔴 180d</span>
+                <span class="px-2 py-0.5 rounded-md bg-rose-200 text-rose-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.rojo.cantidad }}</span>
+              </div>
+              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.rojo.monto)">
+                ${{ formatearNumero(conteoSemaforo.rojo.monto) }}
+              </div>
+            </button>
+
+          </div>
+
+          <!-- Alerta destacada: Adeudos 1 año reclamados por proveedores (Paleta limpia, sin mayor/menor) -->
+          <div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-1 text-xs">
+            <button type="button" @click="filtrarPorSemaforo('MAS_UN_ANO')"
+                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer"
+                    :class="filtroSemaforoAntiguedad === 'MAS_UN_ANO' ? 'bg-rose-100 border-2 border-rose-600 text-rose-950 ring-2 ring-rose-400/30 shadow-sm' : 'bg-rose-50/80 border border-rose-300 text-rose-900 hover:bg-rose-100 hover:border-rose-400'">
+              <i class="fa-solid fa-triangle-exclamation text-rose-600 text-xs"></i>
+              <span class="font-bold">Adeudos 1 año (Reclamo Proveedor):</span>
+              <span class="font-mono font-black text-rose-950 ml-1">{{ conteoSemaforo.rojo.mas_un_ano }} OCs</span>
+              <span class="font-mono font-bold text-rose-700 ml-1">(${{ formatearNumero(conteoSemaforo.rojo.monto_mas_un_ano) }})</span>
+            </button>
+            <span class="text-[10px] text-slate-500 font-semibold">Priorizar en pagos programados</span>
           </div>
 
         </div>
@@ -902,8 +985,8 @@
                     {{ oc.centro_costos || 'N/A' }}
                   </td>
 
-                  <!-- 2. OC -->
-                  <td class="py-2 px-3 text-center font-mono font-extrabold text-indigo-400">
+                  <!-- 2. OC (Más grande y destacado) -->
+                  <td class="py-2 px-3 text-center font-mono font-black text-indigo-600 text-sm">
                     #{{ oc.numero_oc }}
                   </td>
 
@@ -1741,37 +1824,37 @@
       </div>
     </div>
 
-    <div v-if="mostrarModalSeguimiento" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-      <div class="w-full max-w-xl rounded-2xl border border-slate-600 bg-slate-800 p-5 text-slate-100 shadow-2xl">
-        <div class="mb-4 flex items-start justify-between border-b border-slate-700 pb-3">
+    <div v-if="mostrarModalSeguimiento" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-2xl">
+        <div class="mb-4 flex items-start justify-between border-b border-slate-200 pb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Bitácora de seguimiento</span>
-            <h3 class="mt-1 text-base font-black text-white">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Bitácora de seguimiento</span>
+            <h3 class="mt-1 text-base font-black text-slate-900">
               <span v-if="accionSeguimiento === 'nota'">Registrar movimiento</span>
               <span v-else-if="accionSeguimiento === 'estado'">Actualizar estado de la OC</span>
               <span v-else>Reasignar cartera de OCs</span>
             </h3>
-            <p class="mt-1 text-xs text-slate-400">
+            <p class="mt-1 text-xs text-slate-500">
               <span v-if="ocSeguimientoSeleccionada">OC #{{ ocSeguimientoSeleccionada.numero_oc }} · {{ ocSeguimientoSeleccionada.centro_costos }}</span>
               <span v-else>{{ ordenesSeguimientoSeleccionadas.length }} OC(s) seleccionadas</span>
             </p>
           </div>
-          <button type="button" @click="cerrarModalSeguimiento" class="text-slate-400 hover:text-white" aria-label="Cerrar">
+          <button type="button" @click="cerrarModalSeguimiento" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
             <i class="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
         <div v-if="accionSeguimiento === 'nota'" class="space-y-2">
-          <label class="text-xs font-bold text-slate-300">¿Qué seguimiento se realizó?</label>
+          <label class="text-xs font-bold text-slate-700">¿Qué seguimiento se realizó?</label>
           <textarea v-model="notaSeguimiento" rows="4" maxlength="1000"
                     placeholder="Ej. Se confirmó con el proveedor la entrega para el viernes..."
-                    class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"></textarea>
         </div>
 
         <div v-else-if="accionSeguimiento === 'estado'" class="space-y-3">
           <div>
-            <label class="mb-1 block text-xs font-bold text-slate-300">Estado</label>
-            <select v-model="estadoSeguimiento" class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white">
+            <label class="mb-1 block text-xs font-bold text-slate-700">Estado</label>
+            <select v-model="estadoSeguimiento" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
               <option value="ABIERTA">Abierta</option>
               <option value="EN_ESPERA_PROVEEDOR">En espera del proveedor</option>
               <option value="CERRADA">Cerrada</option>
@@ -1779,16 +1862,16 @@
             </select>
           </div>
           <div>
-            <label class="mb-1 block text-xs font-bold text-slate-300">Motivo / nota</label>
+            <label class="mb-1 block text-xs font-bold text-slate-700">Motivo / nota</label>
             <textarea v-model="notaSeguimiento" rows="3" maxlength="1000" placeholder="Describe por qué cambia el estado..."
-                      class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"></textarea>
           </div>
         </div>
 
         <div v-else class="space-y-3">
           <div>
-            <label class="mb-1 block text-xs font-bold text-slate-300">Asignar a compradora activa</label>
-            <select v-model="responsableSeguimientoId" class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white">
+            <label class="mb-1 block text-xs font-bold text-slate-700">Asignar a compradora activa</label>
+            <select v-model="responsableSeguimientoId" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
               <option value="">Selecciona una compradora</option>
               <option v-for="compradora in compradorasSeguimiento" :key="compradora.id" :value="compradora.id">
                 {{ compradora.nombre }} ({{ compradora.id }})
@@ -1796,26 +1879,26 @@
             </select>
           </div>
           <div>
-            <label class="mb-1 block text-xs font-bold text-slate-300">Motivo de reasignación</label>
+            <label class="mb-1 block text-xs font-bold text-slate-700">Motivo de reasignación</label>
             <textarea v-model="motivoReasignacion" rows="3" maxlength="1000" placeholder="Ej. Reasignación por cambio de puesto de la responsable..."
-                      class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"></textarea>
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"></textarea>
           </div>
-          <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-100">
+          <p class="rounded-lg border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800 font-medium">
             La reasignación quedará registrada en la bitácora, pero no reiniciará los días sin actividad.
           </p>
         </div>
 
-        <div class="mt-5 flex justify-end gap-2 border-t border-slate-700 pt-4">
-          <button type="button" @click="cerrarModalSeguimiento" class="rounded-lg bg-slate-700 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-600">
+        <div class="mt-5 flex justify-end gap-2 border-t border-slate-200 pt-4">
+          <button type="button" @click="cerrarModalSeguimiento" class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 transition">
             Cancelar
           </button>
-          <button v-if="accionSeguimiento === 'nota'" type="button" @click="guardarNotaSeguimiento" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-500">
+          <button v-if="accionSeguimiento === 'nota'" type="button" @click="guardarNotaSeguimiento" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-500 shadow-sm transition">
             Guardar movimiento
           </button>
-          <button v-else-if="accionSeguimiento === 'estado'" type="button" @click="guardarEstadoSeguimiento" class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-500">
+          <button v-else-if="accionSeguimiento === 'estado'" type="button" @click="guardarEstadoSeguimiento" class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-500 shadow-sm transition">
             Guardar estado
           </button>
-          <button v-else type="button" @click="guardarReasignacionSeguimiento" class="rounded-lg bg-amber-500 px-4 py-2 text-xs font-black text-slate-950 hover:bg-amber-400">
+          <button v-else type="button" @click="guardarReasignacionSeguimiento" class="rounded-lg bg-amber-500 px-4 py-2 text-xs font-black text-slate-950 hover:bg-amber-400 shadow-sm transition">
             Confirmar reasignación
           </button>
         </div>
@@ -1848,6 +1931,6 @@
     })();
   </script>
   <!-- Aplicación Vue 3 Modular -->
-  <script src="{{ asset('js/app.js') }}?v=2.9"></script>
+  <script src="{{ asset('js/app.js') }}?v=3.0"></script>
 </body>
 </html>

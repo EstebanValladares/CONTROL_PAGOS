@@ -56,6 +56,7 @@ class OrdenesService
         $filtroSemana = trim((string) ($params['semana'] ?? ''));
         $busqueda = trim((string) ($params['busqueda'] ?? ''));
         $obra = trim((string) ($params['obra'] ?? ''));
+        $filtroSemaforo = strtoupper(trim((string) ($params['semaforo'] ?? '')));
         $misOrdenes = filter_var($params['mis_ordenes'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $limite = max(1, (int) ($params['limite'] ?? 50));
         $pagina = max(1, (int) ($params['pagina'] ?? 1));
@@ -73,8 +74,10 @@ class OrdenesService
             }
         }
 
-        // Filtro por temporal (HOY tiene prioridad para la vista en vivo) o por semana seleccionada
-        if ($filtroTemporal === 'HOY') {
+        // Filtro por temporal o semana (el filtro por semáforo de pasivos antiguos tiene prioridad sobre el filtro de hoy)
+        if (! empty($filtroSemaforo)) {
+            // El usuario está filtrando específicamente por antigüedad de adeudos; no restringir a sólo hoy
+        } elseif ($filtroTemporal === 'HOY') {
             $query->whereRaw("fecha = date('now', 'localtime')");
         } elseif (! empty($filtroSemana)) {
             $catSemana = DB::table('cat_semanas_ek9')
@@ -94,6 +97,19 @@ class OrdenesService
             $query->where('centro_costos', $obra);
         }
 
+        // Filtro por semáforo de antigüedad de adeudo
+        if ($filtroSemaforo === 'VERDE') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) < 30");
+        } elseif ($filtroSemaforo === 'AMARILLO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 30 AND (julianday('now', 'localtime') - julianday(fecha)) <= 90");
+        } elseif ($filtroSemaforo === 'NARANJA') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 90 AND (julianday('now', 'localtime') - julianday(fecha)) <= 180");
+        } elseif ($filtroSemaforo === 'ROJO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 180");
+        } elseif ($filtroSemaforo === 'MAS_UN_ANO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 365");
+        }
+
         if (! empty($busqueda)) {
             $p = "%{$busqueda}%";
             $query->where(function ($q) use ($p) {
@@ -101,6 +117,8 @@ class OrdenesService
                     ->orWhere('proveedor', 'LIKE', $p)
                     ->orWhere('centro_costos', 'LIKE', $p)
                     ->orWhere('id_ek10', 'LIKE', $p)
+                    ->orWhere('solicito_empleado', 'LIKE', $p)
+                    ->orWhereRaw('CAST(id_empleado AS TEXT) LIKE ?', [$p])
                     ->orWhere('comentarios', 'LIKE', $p);
             });
         }
@@ -140,7 +158,33 @@ class OrdenesService
                 $f['programaciones'] = $progs;
                 $pagadoAcum = array_sum(array_column($progs, 'monto_programado'));
                 $f['total_programado'] = round((float) $pagadoAcum, 2);
-                $f['saldo_disponible'] = max(0.0, round(((float) ($f['total'] ?? 0.0)) - $pagadoAcum, 2));
+                $saldoDisp = max(0.0, round(((float) ($f['total'] ?? 0.0)) - $pagadoAcum, 2));
+                $f['saldo_disponible'] = $saldoDisp;
+
+                // Cálculo de antigüedad y semáforo de adeudo
+                $diasAntiguedad = ! empty($f['fecha']) ? max(0, (int) floor((time() - strtotime($f['fecha'])) / 86400)) : 0;
+                $f['dias_antiguedad'] = $diasAntiguedad;
+                if ($saldoDisp <= 0.009) {
+                    $f['semaforo_nivel'] = 'LIQUIDADO';
+                    $f['semaforo_color'] = 'slate';
+                    $f['semaforo_label'] = 'PAGADA';
+                } elseif ($diasAntiguedad < 30) {
+                    $f['semaforo_nivel'] = 'VERDE';
+                    $f['semaforo_color'] = 'emerald';
+                    $f['semaforo_label'] = "30d ({$diasAntiguedad}d)";
+                } elseif ($diasAntiguedad <= 90) {
+                    $f['semaforo_nivel'] = 'AMARILLO';
+                    $f['semaforo_color'] = 'amber';
+                    $f['semaforo_label'] = "30-90d ({$diasAntiguedad}d)";
+                } elseif ($diasAntiguedad <= 180) {
+                    $f['semaforo_nivel'] = 'NARANJA';
+                    $f['semaforo_color'] = 'orange';
+                    $f['semaforo_label'] = "90-180d ({$diasAntiguedad}d)";
+                } else {
+                    $f['semaforo_nivel'] = 'ROJO';
+                    $f['semaforo_color'] = 'rose';
+                    $f['semaforo_label'] = ($diasAntiguedad >= 365) ? "1 año ({$diasAntiguedad}d)" : "180d ({$diasAntiguedad}d)";
+                }
 
                 $docs = DB::table('documentos_oc')
                     ->select('id', 'nombre_original', 'nombre_guardado', 'tamano_bytes', 'creado_en')
@@ -170,7 +214,17 @@ class OrdenesService
             SUM(CASE WHEN fecha = date('now', 'localtime') THEN 1 ELSE 0 END) as ordenes_hoy,
             SUM(CASE WHEN fecha = date('now', 'localtime') THEN total ELSE 0 END) as monto_hoy,
             COUNT(*) as total_acumulado,
-            SUM(total) as monto_acumulado
+            SUM(total) as monto_acumulado,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) < 30 THEN 1 ELSE 0 END) as count_verde,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) < 30 THEN total ELSE 0 END) as monto_verde,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) >= 30 AND (julianday('now', 'localtime') - julianday(fecha)) <= 90 THEN 1 ELSE 0 END) as count_amarillo,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) >= 30 AND (julianday('now', 'localtime') - julianday(fecha)) <= 90 THEN total ELSE 0 END) as monto_amarillo,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) > 90 AND (julianday('now', 'localtime') - julianday(fecha)) <= 180 THEN 1 ELSE 0 END) as count_naranja,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) > 90 AND (julianday('now', 'localtime') - julianday(fecha)) <= 180 THEN total ELSE 0 END) as monto_naranja,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) > 180 THEN 1 ELSE 0 END) as count_rojo,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) > 180 THEN total ELSE 0 END) as monto_rojo,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) >= 365 THEN 1 ELSE 0 END) as count_mas_un_ano,
+            SUM(CASE WHEN (julianday('now', 'localtime') - julianday(fecha)) >= 365 THEN total ELSE 0 END) as monto_mas_un_ano
         ")->first();
 
         $kpis = [
@@ -178,6 +232,26 @@ class OrdenesService
             'monto_hoy' => round((float) ($kpisRaw->monto_hoy ?? 0.0), 2),
             'total_acumulado' => (int) ($kpisRaw->total_acumulado ?? 0),
             'monto_acumulado' => round((float) ($kpisRaw->monto_acumulado ?? 0.0), 2),
+            'semaforo' => [
+                'verde' => [
+                    'cantidad' => (int) ($kpisRaw->count_verde ?? 0),
+                    'monto' => round((float) ($kpisRaw->monto_verde ?? 0.0), 2),
+                ],
+                'amarillo' => [
+                    'cantidad' => (int) ($kpisRaw->count_amarillo ?? 0),
+                    'monto' => round((float) ($kpisRaw->monto_amarillo ?? 0.0), 2),
+                ],
+                'naranja' => [
+                    'cantidad' => (int) ($kpisRaw->count_naranja ?? 0),
+                    'monto' => round((float) ($kpisRaw->monto_naranja ?? 0.0), 2),
+                ],
+                'rojo' => [
+                    'cantidad' => (int) ($kpisRaw->count_rojo ?? 0),
+                    'monto' => round((float) ($kpisRaw->monto_rojo ?? 0.0), 2),
+                    'mas_un_ano' => (int) ($kpisRaw->count_mas_un_ano ?? 0),
+                    'monto_mas_un_ano' => round((float) ($kpisRaw->monto_mas_un_ano ?? 0.0), 2),
+                ],
+            ],
         ];
 
         $totalPaginas = $totalCoincidencias > 0 ? (int) ceil($totalCoincidencias / $limite) : 1;
@@ -213,6 +287,19 @@ class OrdenesService
 
         if (! empty($obra)) {
             $query->where('centro_costos', $obra);
+        }
+
+        // Filtro por semáforo de antigüedad de adeudo
+        if ($filtroSemaforo === 'VERDE') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) < 30");
+        } elseif ($filtroSemaforo === 'AMARILLO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 30 AND (julianday('now', 'localtime') - julianday(fecha)) <= 90");
+        } elseif ($filtroSemaforo === 'NARANJA') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 90 AND (julianday('now', 'localtime') - julianday(fecha)) <= 180");
+        } elseif ($filtroSemaforo === 'ROJO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 180");
+        } elseif ($filtroSemaforo === 'MAS_UN_ANO') {
+            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 365");
         }
 
         $totales = (clone $query)->selectRaw('COUNT(*) as conteo, SUM(monto_programado) as monto')->first();

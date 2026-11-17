@@ -530,6 +530,36 @@
   border-color: currentColor !important;
 }
 
+/* ======================================================== */
+/* SEGUIMIENTO DE OCS - MODO CLARO DE ALTO CONTRASTE        */
+/* ======================================================== */
+.theme-light #seguimiento-ocs-panel {
+  background-color: #ffffff !important;
+}
+
+.theme-light #seguimiento-ocs-panel table {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+.theme-light #seguimiento-ocs-panel thead tr,
+.theme-light #seguimiento-ocs-panel th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.theme-light #seguimiento-ocs-panel td {
+  color: #1e293b !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.theme-light #seguimiento-ocs-panel .bg-slate-700 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
 [v-cloak] { display: none; }
     .slide-fade-enter-active { transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
     .slide-fade-leave-active { transition: all 0.25s cubic-bezier(0.7, 0, 0.84, 0); }

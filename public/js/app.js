@@ -1,5 +1,4 @@
     const { createApp } = Vue;
-    let sincronizacionOrdenesVivoEnCurso = null;
 
     createApp({
       data() {
@@ -81,9 +80,7 @@
           ordenesVivo: [],
           cargandoVivo: false,
           sincronizandoOrdenesVivo: false,
-          sincronizacionOrdenesVivoFallida: false,
           solicitudOrdenesVivo: 0,
-          solicitudCargaOrdenesVivo: 0,
           ordenesSeguimiento: [],
           cargandoSeguimiento: false,
           seguimientoExpandido: false,
@@ -107,12 +104,19 @@
             ordenes_hoy: 0,
             monto_hoy: 0,
             total_acumulado: 0,
-            monto_acumulado: 0
+            monto_acumulado: 0,
+            semaforo: {
+              verde: { cantidad: 0, monto: 0 },
+              amarillo: { cantidad: 0, monto: 0 },
+              naranja: { cantidad: 0, monto: 0 },
+              rojo: { cantidad: 0, monto: 0, mas_un_ano: 0, monto_mas_un_ano: 0 }
+            }
           },
-          filtroVivoTemporal: 'HOY',
+          filtroVivoTemporal: 'SEMANA',
           filtroVivoSemana: '',
           filtroVivoMisOrdenes: true,
           filtroVivoBusqueda: '',
+          filtroSemaforoAntiguedad: '',
           paginaVivo: 1,
           totalPaginasVivo: 1,
           totalFiltradoVivo: 0,
@@ -234,9 +238,44 @@
         },
         totalMontoLote() {
           return this.ordenesListasParaGuardar.reduce((acc, o) => acc + Number(o.inputMonto || 0), 0);
+        },
+        conteoSemaforo() {
+          const res = {
+            verde: { cantidad: 0, monto: 0 },
+            amarillo: { cantidad: 0, monto: 0 },
+            naranja: { cantidad: 0, monto: 0 },
+            rojo: { cantidad: 0, monto: 0, mas_un_ano: 0, monto_mas_un_ano: 0 },
+            total: { cantidad: 0, monto: 0 }
+          };
+
+          if (this.kpisVivo && this.kpisVivo.semaforo) {
+            const s = this.kpisVivo.semaforo;
+            res.verde.cantidad = s.verde?.cantidad || 0;
+            res.verde.monto = s.verde?.monto || 0;
+            res.amarillo.cantidad = s.amarillo?.cantidad || 0;
+            res.amarillo.monto = s.amarillo?.monto || 0;
+            res.naranja.cantidad = s.naranja?.cantidad || 0;
+            res.naranja.monto = s.naranja?.monto || 0;
+            res.rojo.cantidad = s.rojo?.cantidad || 0;
+            res.rojo.monto = s.rojo?.monto || 0;
+            res.rojo.mas_un_ano = s.rojo?.mas_un_ano || 0;
+            res.rojo.monto_mas_un_ano = s.rojo?.monto_mas_un_ano || 0;
+            res.total.cantidad = res.verde.cantidad + res.amarillo.cantidad + res.naranja.cantidad + res.rojo.cantidad;
+            res.total.monto = res.verde.monto + res.amarillo.monto + res.naranja.monto + res.rojo.monto;
+          }
+
+          return res;
         }
       },
       methods: {
+        filtrarPorSemaforo(nivel) {
+          if (this.filtroSemaforoAntiguedad === nivel) {
+            this.filtroSemaforoAntiguedad = '';
+          } else {
+            this.filtroSemaforoAntiguedad = nivel;
+          }
+          this.cargarOrdenesVivo(1);
+        },
         alternarAcordeonOC(oc) {
           if (this.ocExpandidaId === oc.id) {
             this.ocExpandidaId = null;
@@ -944,51 +983,28 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.filtroVivoObra = obra;
           this.aplicarFiltroObra();
         },
-        async sincronizarOrdenesVivo() {
-          if (!sincronizacionOrdenesVivoEnCurso) {
-            this.sincronizandoOrdenesVivo = true;
-            sincronizacionOrdenesVivoEnCurso = (async () => {
-              try {
-                const respuesta = await fetch('/api/ordenes/sincronizar', { method: 'POST' });
-                const contenido = await respuesta.text();
-                let data = {};
-                try {
-                  data = contenido ? JSON.parse(contenido) : {};
-                } catch (error) {
-                  data = {};
-                }
-                if (!respuesta.ok || data.status !== 'ok') {
-                  throw new Error(
-                    data.mensaje
-                    || (respuesta.ok
-                      ? 'La sincronización devolvió una respuesta inválida.'
-                      : `La sincronización falló (HTTP ${respuesta.status}).`)
-                  );
-                }
-                this.sincronizacionOrdenesVivoFallida = false;
-                return data;
-              } catch (error) {
-                this.sincronizacionOrdenesVivoFallida = true;
-                throw error;
-              }
-            })();
-          }
-
-          const sincronizacionActual = sincronizacionOrdenesVivoEnCurso;
+        async sincronizarOrdenesVivo(manual = false) {
+          if (this.sincronizandoOrdenesVivo) return;
+          this.sincronizandoOrdenesVivo = true;
           try {
-            return await sincronizacionActual;
-          } finally {
-            if (sincronizacionOrdenesVivoEnCurso === sincronizacionActual) {
-              sincronizacionOrdenesVivoEnCurso = null;
-              this.sincronizandoOrdenesVivo = false;
+            const respuesta = await fetch('/api/ordenes/sincronizar', { method: 'POST' });
+            const data = await respuesta.json();
+            if (!respuesta.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudieron sincronizar las órdenes.');
             }
+            await this.cargarOrdenesVivo(1, true);
+          } catch (e) {
+            console.warn('Aviso en sincronización en vivo:', e);
+            if (manual) {
+              this.dispararToastError(e.message || 'No se pudieron sincronizar las órdenes.');
+            }
+          } finally {
+            this.sincronizandoOrdenesVivo = false;
+            await this.cargarOrdenesVivo(1, true);
           }
         },
         async cargarOrdenesVivo(pagina = 1, silencioso = false) {
-          if (silencioso && (this.sincronizandoOrdenesVivo || this.sincronizacionOrdenesVivoFallida)) return;
-
-          const solicitudCargaActual = silencioso ? null : ++this.solicitudCargaOrdenesVivo;
-          let solicitudActual = ++this.solicitudOrdenesVivo;
+          const solicitudActual = ++this.solicitudOrdenesVivo;
           if (!this.filtroVivoSemana) {
             this.ordenesVivo = [];
             this.totalFiltradoVivo = 0;
@@ -1002,12 +1018,6 @@ async cargarProgramacionesSemana(silencioso = false) {
           }
           this.paginaVivo = pagina;
           try {
-            if (!silencioso) {
-              await this.sincronizarOrdenesVivo();
-              if (solicitudCargaActual !== this.solicitudCargaOrdenesVivo) return;
-              solicitudActual = ++this.solicitudOrdenesVivo;
-            }
-
             const params = new URLSearchParams({
               pagina: pagina,
               limite: 50,
@@ -1016,6 +1026,7 @@ async cargarProgramacionesSemana(silencioso = false) {
               semana: this.filtroVivoSemana,
               obra: this.filtroVivoObra,
               busqueda: this.filtroVivoBusqueda,
+              semaforo: this.filtroSemaforoAntiguedad,
               mis_ordenes: (this.perfilUsuario && (this.perfilUsuario.rol === 'ADMIN' || this.perfilUsuario.es_admin_funcional) && !this.filtroVivoMisOrdenes) ? '0' : (this.filtroVivoMisOrdenes ? '1' : '0')
             });
             if (this.perfilUsuario && this.perfilUsuario.id) {
@@ -1060,20 +1071,12 @@ async cargarProgramacionesSemana(silencioso = false) {
               await this.cargarProgramacionesSemana();
             }
           } catch (e) {
-            if (
-              (solicitudCargaActual === null && solicitudActual === this.solicitudOrdenesVivo)
-              || solicitudCargaActual === this.solicitudCargaOrdenesVivo
-            ) {
+            if (solicitudActual === this.solicitudOrdenesVivo) {
               console.error('Error cargando órdenes en vivo:', e);
-              if (!silencioso) {
-                this.dispararToastError(e.message || 'No se pudieron actualizar las órdenes.');
-              }
+              this.dispararToastError(e.message || 'No se pudieron actualizar las órdenes.');
             }
           } finally {
-            if (
-              (solicitudCargaActual === null && solicitudActual === this.solicitudOrdenesVivo)
-              || solicitudCargaActual === this.solicitudCargaOrdenesVivo
-            ) {
+            if (solicitudActual === this.solicitudOrdenesVivo) {
               this.cargandoVivo = false;
             }
           }
@@ -1472,6 +1475,7 @@ async cargarProgramacionesSemana(silencioso = false) {
         if (this.usuarioActivo) {
           if (this.vistaActiva === 'ORDENES_VIVO') {
             await this.cargarOrdenesVivo(1);
+            this.sincronizarOrdenesVivo();
             await this.cargarSeguimiento(1);
             await this.cargarCompradorasSeguimiento();
             await this.cargarProgramacionesSemana();
@@ -1479,25 +1483,18 @@ async cargarProgramacionesSemana(silencioso = false) {
             await this.cargarDatos(1);
           }
         }
-        // Auto-refresco en vivo cada 15s para capturar OCs nuevas de Enkontrol
+        // Refresco ligero cada 20s (solo lee SQLite local, 0 peticiones a Sybase)
         setInterval(() => {
-          if (this.vistaActiva === 'ORDENES_VIVO' && this.paginaVivo === 1 && !this.filtroVivoBusqueda) {
-            // Refresco silencioso: actualiza en segundo plano sin parpadeos ni spinners
+          if (this.vistaActiva === 'ORDENES_VIVO' && this.paginaVivo === 1 && !this.filtroVivoBusqueda && !this.cargandoVivo) {
             this.cargarOrdenesVivo(1, true);
           }
-        }, 15000);
+        }, 20000);
 
-        // Auto-sincronización periódica con Enkontrol cada 60s
-        setInterval(async () => {
-          if (this.vistaActiva === 'ORDENES_VIVO') {
-            try {
-              await this.sincronizarOrdenesVivo();
-              await this.cargarOrdenesVivo(1, true);
-            } catch (error) {
-              console.error('Error en la sincronización periódica de órdenes:', error);
-              this.dispararToastError(error.message || 'No se pudieron sincronizar las órdenes.');
-            }
+        // Sincronización con Enkontrol cada 2 minutos (con candado en servidor para no saturar)
+        setInterval(() => {
+          if (this.vistaActiva === 'ORDENES_VIVO' && this.paginaVivo === 1 && !this.filtroVivoBusqueda && !this.sincronizandoOrdenesVivo) {
+            this.sincronizarOrdenesVivo();
           }
-        }, 60000);
+        }, 120000);
       }
     }).mount('#app');

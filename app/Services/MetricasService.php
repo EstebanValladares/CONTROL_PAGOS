@@ -87,7 +87,7 @@ class MetricasService
             'estado' => 'OPERATIVO',
             'salud' => '100%',
             'version' => '2.0.0 (Laravel)',
-            'servidor' => 'Laragon / PHP 8.3 / Apache',
+            'servidor' => 'PHP ' . PHP_VERSION . ' / Laravel ' . app()->version(),
             'uptime_segundos' => 3600,
             'latencia_db_ms' => $latenciaMs,
             'datos' => [

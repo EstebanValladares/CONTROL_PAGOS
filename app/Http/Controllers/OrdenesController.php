@@ -9,6 +9,7 @@ use App\Services\PagosService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
@@ -28,6 +29,7 @@ class OrdenesController extends Controller
                 'semana' => $request->query('semana', ''),
                 'busqueda' => $request->query('busqueda', $request->query('q', '')),
                 'obra' => $request->query('obra', ''),
+                'semaforo' => $request->query('semaforo', ''),
                 'mis_ordenes' => $request->query('mis_ordenes', '1'),
                 'pagina' => (int) $request->query('pagina', 1),
                 'limite' => (int) $request->query('limite', 50),
@@ -302,6 +304,21 @@ class OrdenesController extends Controller
 
     public function sincronizarEnkontrol(Request $request): JsonResponse
     {
+        // 1. Candado / Cooldown: Evitar que múltiples usuarios saturen Enkontrol simultáneamente
+        $lockKey = 'enkontrol_sync_cooldown';
+        $ultimoSync = Cache::get($lockKey);
+        // Si se sincronizó hace menos de 45 segundos, no saturar Sybase; reutilizar datos locales
+        if ($ultimoSync && (time() - $ultimoSync) < 45) {
+            return response()->json([
+                'status' => 'ok',
+                'mensaje' => 'Datos al día. Sincronizado hace ' . (time() - $ultimoSync) . ' segundos.',
+                'omitido' => true,
+            ]);
+        }
+
+        // Marcar tiempo de sincronización activo
+        Cache::put($lockKey, time(), 60);
+
         try {
             $script = base_path('sincronizar_ordenes_ek9.py');
             if (! file_exists($script)) {
@@ -321,24 +338,29 @@ class OrdenesController extends Controller
                 }
             }
 
-            $process = new Process([$pythonExec, $script]);
+            $process = new Process([$pythonExec, $script, '--dias=5']);
             $process->setTimeout(120);
             $process->run();
 
-            if (! $process->isSuccessful()) {
-                Log::error('Falló la sincronización de órdenes con Enkontrol.', [
+            $salida = $process->getOutput();
+            $procesadas = str_contains($salida, 'procesadas') || str_contains($salida, 'Éxito') || str_contains($salida, 'xito');
+
+            if (! $process->isSuccessful() && ! $procesadas) {
+                Log::warning('Aviso en sincronización con Enkontrol.', [
                     'exit_code' => $process->getExitCode(),
+                    'error' => $process->getErrorOutput(),
+                    'salida' => $salida,
                 ]);
 
                 return response()->json([
                     'status' => 'error',
-                    'mensaje' => 'No se pudieron sincronizar todas las órdenes. Verifica la conexión a Enkontrol y vuelve a intentar.',
+                    'mensaje' => 'No se pudieron sincronizar las órdenes con Enkontrol. Verifica la conexión a la red de la oficina.',
                 ], 502);
             }
 
             return response()->json([
                 'status' => 'ok',
-                'salida' => $process->getOutput(),
+                'salida' => $salida,
                 'exitoso' => true,
             ]);
         } catch (Exception $e) {
