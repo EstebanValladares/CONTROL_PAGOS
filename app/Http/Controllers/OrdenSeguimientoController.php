@@ -138,19 +138,61 @@ class OrdenSeguimientoController extends Controller
         }
 
         $datos = $request->validate([
-            'ordenes' => ['required', 'array', 'min:1', 'max:100'],
-            'ordenes.*.centro_costos' => ['required', 'string', 'max:100'],
-            'ordenes.*.numero_oc' => ['required', 'integer', 'min:1'],
+            'ordenes' => ['nullable', 'array', 'max:500'],
+            'ordenes.*.centro_costos' => ['required_with:ordenes', 'string', 'max:100'],
+            'ordenes.*.numero_oc' => ['required_with:ordenes', 'integer', 'min:1'],
             'responsable_id' => ['required', 'integer', 'min:1'],
-            'motivo' => ['required', 'string', 'min:5', 'max:1000'],
+            'motivo' => ['nullable', 'string', 'max:1000'],
+            'plaza' => ['nullable', 'string', 'max:100'],
+            'filtro_pagados' => ['nullable', 'string', 'max:50'],
+            'sin_seguimiento' => ['nullable', 'boolean'],
         ]);
+
+        $ordenes = $datos['ordenes'] ?? [];
+        $plaza = $datos['plaza'] ?? 'ESTA_OC';
+        $filtroPagados = $datos['filtro_pagados'] ?? 'TODAS';
+        $sinSeguimiento = (bool) ($datos['sin_seguimiento'] ?? false);
+        $motivo = trim((string) ($datos['motivo'] ?? '')) ?: 'Reasignación de cartera de OC';
+
+        // Manejo de alcance según la opción de Plaza elegida
+        if ($plaza === 'ESTA_OBRA' && ! empty($ordenes[0]['centro_costos'])) {
+            $queryObra = \Illuminate\Support\Facades\DB::table('ordenes_compra_ek9')
+                ->where('empresa', $contexto['empresa'])
+                ->where('centro_costos', $ordenes[0]['centro_costos'])
+                ->whereRaw("UPPER(COALESCE(estatus, '')) <> 'C'");
+
+            $ordenes = $queryObra->get(['centro_costos', 'numero_oc'])
+                ->map(fn ($r) => ['centro_costos' => $r->centro_costos, 'numero_oc' => (int) $r->numero_oc])
+                ->all();
+        } elseif ($plaza !== 'ESTA_OC' && $plaza !== 'TODAS' && ! empty($plaza)) {
+            $obrasPlaza = \Illuminate\Support\Facades\DB::table('pagos')
+                ->where('EMPRESA', $contexto['empresa'])
+                ->where('ZONA', $plaza)
+                ->distinct()
+                ->pluck('OBRA')
+                ->toArray();
+
+            if (! empty($obrasPlaza)) {
+                $ordenes = \Illuminate\Support\Facades\DB::table('ordenes_compra_ek9')
+                    ->where('empresa', $contexto['empresa'])
+                    ->whereIn('centro_costos', $obrasPlaza)
+                    ->whereRaw("UPPER(COALESCE(estatus, '')) <> 'C'")
+                    ->get(['centro_costos', 'numero_oc'])
+                    ->map(fn ($r) => ['centro_costos' => $r->centro_costos, 'numero_oc' => (int) $r->numero_oc])
+                    ->all();
+            }
+        }
+
+        if (empty($ordenes)) {
+            return response()->json(['status' => 'error', 'mensaje' => 'No se encontraron órdenes para reasignar con esos criterios.'], 422);
+        }
 
         try {
             $cantidad = $this->seguimiento->reasignarCartera(
                 $contexto['empresa'],
-                $datos['ordenes'],
+                $ordenes,
                 (int) $datos['responsable_id'],
-                trim($datos['motivo']),
+                $motivo,
                 $contexto['usuario_id'],
                 $contexto['usuario_nombre']
             );
@@ -160,7 +202,7 @@ class OrdenSeguimientoController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'mensaje' => "{$cantidad} OC(s) reasignada(s).",
+            'mensaje' => "{$cantidad} OC(s) reasignada(s) con éxito.",
             'reasignadas' => $cantidad,
         ]);
     }

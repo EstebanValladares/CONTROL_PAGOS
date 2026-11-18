@@ -97,6 +97,16 @@
           estadoSeguimiento: 'ABIERTA',
           responsableSeguimientoId: '',
           motivoReasignacion: '',
+          mostrarModalReasignacion: false,
+          ocReasignarSeleccionada: null,
+          cargandoReasignacion: false,
+          formReasignacion: {
+            plaza: 'ESTA_OC',
+            pagados: 'TODAS',
+            sinSeguimiento: false,
+            usuarioId: '',
+            motivo: 'Reasignación individual desde panel principal'
+          },
           historialSeguimientoOC: null,
           historialSeguimiento: [],
           cargandoHistorialSeguimiento: false,
@@ -114,7 +124,6 @@
           },
           filtroVivoTemporal: 'SEMANA',
           filtroVivoSemana: '',
-          filtroVivoMisOrdenes: true,
           filtroVivoBusqueda: '',
           filtroSemaforoAntiguedad: '',
           paginaVivo: 1,
@@ -139,6 +148,7 @@
           archivosPendientesPorOC: {},
           documentosTemporalesPorProgramacion: {},
           mostrarModalAdjuntarOC: false,
+          estiloPopoverAdjuntar: null,
           ocParaAdjuntar: null,
           archivosParaSubirOC: [],
           subiendoArchivosOC: false,
@@ -197,6 +207,15 @@
             String(this.perfilUsuario.rol || '').trim().toUpperCase() === 'ADMIN'
             || (Number(this.perfilUsuario.id) === 3399 && this.perfilUsuario.es_admin_funcional)
           ));
+        },
+        compradorasDisponibles() {
+          if (this.compradorasSeguimiento && this.compradorasSeguimiento.length) {
+            return this.compradorasSeguimiento;
+          }
+          if (this.listaResponsables && this.listaResponsables.length) {
+            return this.listaResponsables.map((r, i) => ({ id: i + 1, nombre: r }));
+          }
+          return [];
         },
         calculoDiferencia() {
           const imp = Number(this.formProgramar.importe) || 0;
@@ -331,16 +350,6 @@
         },
         limpiarInputMonto(oc) {
           oc.inputMonto = null;
-        },
-        llenarTodasConSaldo() {
-          for (const oc of this.ordenesFiltradasObra) {
-            const saldo = (oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total;
-            if (saldo > 0.009) {
-              oc.inputMonto = saldo;
-              if (!oc.inputRubro) oc.inputRubro = '';
-              if (!oc.inputSemana) oc.inputSemana = this.semanaCorteMasiva;
-            }
-          }
         },
         limpiarTodosLosInputs() {
           for (const oc of this.ordenesFiltradasObra) {
@@ -605,7 +614,7 @@
             normalizar(semana) === normalizar(this.semanaActualOficial.etiqueta)
           );
         },
-        abrirModalAdjuntarOC(oc) {
+        abrirModalAdjuntarOC(oc, event) {
           const clave = this.claveDocumentosOC(oc);
           if (oc.total_documentos > 0) {
             this.dispararToastAdvertencia(`La OC #${oc.numero_oc} ya cuenta con documentos adjuntados. No se permite duplicar.`);
@@ -614,10 +623,38 @@
           this.ocParaAdjuntar = oc;
           // Si ya tenía archivos pausados, cargarlos
           this.archivosParaSubirOC = this.archivosPendientesPorOC[clave] ? [...this.archivosPendientesPorOC[clave]] : [];
+
+          // Calcular posición de despliegue relativo al botón (arriba o abajo)
+          if (event && event.currentTarget) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const anchoVentana = window.innerWidth;
+            const altoVentana = window.innerHeight;
+            const anchoPopover = 340;
+            
+            // Si hay poco espacio abajo (menos de 290px), desplegar hacia arriba
+            const vaArriba = (altoVentana - rect.bottom) < 290;
+            
+            // Alinear horizontalmente hacia el botón
+            let left = rect.right - anchoPopover;
+            if (left < 10) left = 10;
+            if (left + anchoPopover > anchoVentana - 10) left = anchoVentana - anchoPopover - 10;
+
+            this.estiloPopoverAdjuntar = {
+              left: `${Math.round(left)}px`,
+              width: `${anchoPopover}px`,
+              ...(vaArriba 
+                ? { bottom: `${Math.round(altoVentana - rect.top + 6)}px` } 
+                : { top: `${Math.round(rect.bottom + 6)}px` })
+            };
+          } else {
+            this.estiloPopoverAdjuntar = null;
+          }
+
           this.mostrarModalAdjuntarOC = true;
         },
         cerrarModalAdjuntarOC() {
           this.mostrarModalAdjuntarOC = false;
+          this.estiloPopoverAdjuntar = null;
           this.ocParaAdjuntar = null;
           this.archivosParaSubirOC = [];
         },
@@ -1027,11 +1064,8 @@ async cargarProgramacionesSemana(silencioso = false) {
               obra: this.filtroVivoObra,
               busqueda: this.filtroVivoBusqueda,
               semaforo: this.filtroSemaforoAntiguedad,
-              mis_ordenes: (this.perfilUsuario && (this.perfilUsuario.rol === 'ADMIN' || this.perfilUsuario.es_admin_funcional) && !this.filtroVivoMisOrdenes) ? '0' : (this.filtroVivoMisOrdenes ? '1' : '0')
+              mis_ordenes: '0'
             });
-            if (this.perfilUsuario && this.perfilUsuario.id) {
-              params.append('empleado_id', this.perfilUsuario.id);
-            }
 
             const res = await fetch('/api/ordenes-recientes?' + params.toString());
             const data = await res.json();
@@ -1248,6 +1282,70 @@ async cargarProgramacionesSemana(silencioso = false) {
             this.dispararToastError(error.message || 'No se pudo reasignar la cartera.');
           }
         },
+        abrirMenuReasignacion(oc) {
+          this.ocReasignarSeleccionada = oc;
+          this.formReasignacion = {
+            plaza: 'ESTA_OC',
+            pagados: 'TODAS',
+            sinSeguimiento: false,
+            usuarioId: '',
+            motivo: 'Reasignación individual desde panel principal'
+          };
+          if (!this.compradorasSeguimiento || !this.compradorasSeguimiento.length) {
+            this.cargarCompradorasSeguimiento();
+          }
+          this.mostrarModalReasignacion = true;
+        },
+        cerrarModalReasignacion() {
+          this.mostrarModalReasignacion = false;
+          this.ocReasignarSeleccionada = null;
+          this.cargandoReasignacion = false;
+        },
+        async ejecutarReasignacionIndividual() {
+          if (!this.ocReasignarSeleccionada) return;
+          if (!this.formReasignacion.usuarioId) {
+            this.dispararToastError('Por favor selecciona el usuario al que se reasignará.');
+            return;
+          }
+          this.cargandoReasignacion = true;
+          try {
+            const payload = {
+              ordenes: [{
+                centro_costos: this.ocReasignarSeleccionada.centro_costos,
+                numero_oc: this.ocReasignarSeleccionada.numero_oc
+              }],
+              responsable_id: this.formReasignacion.usuarioId,
+              motivo: this.formReasignacion.motivo || 'Reasignación desde menú de OC',
+              plaza: this.formReasignacion.plaza,
+              filtro_pagados: this.formReasignacion.pagados,
+              sin_seguimiento: Boolean(this.formReasignacion.sinSeguimiento)
+            };
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const res = await fetch('/api/ordenes/seguimiento/reasignar-cartera', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+              },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') {
+              throw new Error(data.mensaje || 'No se pudo completar la reasignación.');
+            }
+            this.cerrarModalReasignacion();
+            this.dispararToastExito(data.mensaje || 'Usuario reasignado con éxito.');
+            if (typeof this.cargarOrdenesVivo === 'function') {
+              await this.cargarOrdenesVivo(this.paginaVivo);
+            }
+          } catch (error) {
+            console.error('Error al reasignar:', error);
+            this.dispararToastError(error.message || 'Error al reasignar.');
+          } finally {
+            this.cargandoReasignacion = false;
+          }
+        },
         async cargarHistorialSeguimiento(oc) {
           if (this.historialSeguimientoOC === this.claveOrdenSeguimiento(oc)) {
             this.historialSeguimientoOC = null;
@@ -1318,11 +1416,9 @@ async cargarProgramacionesSemana(silencioso = false) {
               if (data.usuario.rol === 'ADMIN' || data.usuario.es_admin_funcional) {
                 this.filtroResponsable = '';
                 this.filtroPlaza = '';
-                this.filtroVivoMisOrdenes = false;
               } else {
                 this.filtroResponsable = data.usuario.nombre;
                 this.filtroPlaza = data.usuario.plaza; // Plaza fija asignada al usuario
-                this.filtroVivoMisOrdenes = true;
               }
               await this.cargarFiltros();
               this.cambiarVista('ORDENES_VIVO');
@@ -1356,6 +1452,10 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.filtroPlaza = '';
           this.archivosPendientesPorOC = {};
           this.documentosTemporalesPorProgramacion = {};
+        },
+        limpiarTipo(val) {
+          if (!val) return 'MATERIALES';
+          return String(val).replace(/^(\(\d+\)|\d+)\s*/, '').trim();
         },
         formatearNumero(val) {
           if (val === undefined || val === null || isNaN(val)) return '0.00';
@@ -1464,11 +1564,9 @@ async cargarProgramacionesSemana(silencioso = false) {
           if (this.perfilUsuario.rol === 'ADMIN' || this.perfilUsuario.es_admin_funcional) {
             this.filtroResponsable = '';
             this.filtroPlaza = '';
-            this.filtroVivoMisOrdenes = false;
           } else {
             this.filtroResponsable = this.usuarioActivo;
             this.filtroPlaza = this.perfilUsuario.plaza || '';
-            this.filtroVivoMisOrdenes = true;
           }
         }
         await this.cargarFiltros();

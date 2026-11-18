@@ -343,7 +343,8 @@ class OrdenesController extends Controller
             $process->run();
 
             $salida = $process->getOutput();
-            $procesadas = str_contains($salida, 'procesadas') || str_contains($salida, 'Éxito') || str_contains($salida, 'xito');
+            $esLocal = str_contains($salida, 'MODO LOCAL') || str_contains($salida, 'no detectada');
+            $procesadas = str_contains($salida, 'procesadas') || str_contains($salida, 'Éxito') || str_contains($salida, 'xito') || $esLocal;
 
             if (! $process->isSuccessful() && ! $procesadas) {
                 Log::warning('Aviso en sincronización con Enkontrol.', [
@@ -360,6 +361,10 @@ class OrdenesController extends Controller
 
             return response()->json([
                 'status' => 'ok',
+                'modo' => $esLocal ? 'local' : 'online',
+                'mensaje' => $esLocal 
+                    ? 'Modo Casa / Local activo: Operando con la base de datos local completa (Enkontrol Sybase solo disponible en red de oficina).' 
+                    : 'Sincronización con Enkontrol completada exitosamente.',
                 'salida' => $salida,
                 'exitoso' => true,
             ]);

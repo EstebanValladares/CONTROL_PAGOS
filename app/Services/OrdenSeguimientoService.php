@@ -93,7 +93,7 @@ class OrdenSeguimientoService
 
     public function obtenerCompradoras(string $empresa): array
     {
-        return DB::table('usuarios_ek9')
+        $compradoras = DB::table('usuarios_ek9')
             ->where('empresa', $empresa)
             ->whereRaw("UPPER(COALESCE(estatus, 'A')) <> 'B'")
             ->whereRaw("UPPER(COALESCE(puesto, '')) LIKE '%COMPRADOR%'")
@@ -101,6 +101,18 @@ class OrdenSeguimientoService
             ->get(['empleado as id', 'nombre'])
             ->map(static fn (object $usuario): array => (array) $usuario)
             ->all();
+
+        if (empty($compradoras)) {
+            $compradoras = DB::table('usuarios_ek9')
+                ->where('empresa', $empresa)
+                ->whereRaw("UPPER(COALESCE(estatus, 'A')) <> 'B'")
+                ->orderBy('nombre')
+                ->get(['empleado as id', 'nombre'])
+                ->map(static fn (object $usuario): array => (array) $usuario)
+                ->all();
+        }
+
+        return $compradoras;
     }
 
     public function obtenerHistorial(array $orden, int $usuarioId, bool $esAdministrador): array
@@ -169,11 +181,10 @@ class OrdenSeguimientoService
             ->where('empresa', $empresa)
             ->where('empleado', $compradoraId)
             ->whereRaw("UPPER(COALESCE(estatus, 'A')) <> 'B'")
-            ->whereRaw("UPPER(COALESCE(puesto, '')) LIKE '%COMPRADOR%'")
             ->first(['empleado', 'nombre']);
 
         if (! $compradora) {
-            throw new InvalidArgumentException('La persona seleccionada no es una compradora activa de esta empresa.');
+            throw new InvalidArgumentException('El usuario seleccionado no está activo en esta empresa.');
         }
 
         return DB::transaction(function () use ($empresa, $ordenes, $compradora, $motivo, $usuarioId, $usuarioNombre): int {

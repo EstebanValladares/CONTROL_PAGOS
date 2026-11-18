@@ -289,19 +289,6 @@ class OrdenesService
             $query->where('centro_costos', $obra);
         }
 
-        // Filtro por semáforo de antigüedad de adeudo
-        if ($filtroSemaforo === 'VERDE') {
-            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) < 30");
-        } elseif ($filtroSemaforo === 'AMARILLO') {
-            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 30 AND (julianday('now', 'localtime') - julianday(fecha)) <= 90");
-        } elseif ($filtroSemaforo === 'NARANJA') {
-            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 90 AND (julianday('now', 'localtime') - julianday(fecha)) <= 180");
-        } elseif ($filtroSemaforo === 'ROJO') {
-            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) > 180");
-        } elseif ($filtroSemaforo === 'MAS_UN_ANO') {
-            $query->whereRaw("(julianday('now', 'localtime') - julianday(fecha)) >= 365");
-        }
-
         $totales = (clone $query)->selectRaw('COUNT(*) as conteo, SUM(monto_programado) as monto')->first();
         $totalItems = (int) ($totales->conteo ?? 0);
         $totalMonto = round((float) ($totales->monto ?? 0.0), 2);

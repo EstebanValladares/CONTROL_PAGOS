@@ -508,426 +508,188 @@
           </div>
         </div>
 
-        <!-- Tarjeta Derecha: DATOS DEL USUARIO (Compacta al máximo) -->
-        <div class="lg:col-span-8 bg-slate-800/90 border border-slate-700/80 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between flex-wrap gap-2">
-          
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <i class="fa-solid fa-id-card text-sm"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">{{ usuarioActivo }}</h2>
-                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                  {{ perfilUsuario?.puesto || 'Puesto no asignado' }}
-                </span>
-              </div>
-              <span class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                <span>Sesión Activa</span> • 
-                <span class="text-amber-300 font-semibold">{{ (perfilUsuario && perfilUsuario.es_admin_funcional) ? 'Supervisión Global' : 'Mis Órdenes' }}</span>
-              </span>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <!-- Botón alternar Mis Órdenes / Toda la Empresa -->
-            <button v-if="perfilUsuario && (perfilUsuario.rol === 'ADMIN' || perfilUsuario.es_admin_funcional)"
-                    @click="filtroVivoMisOrdenes = !filtroVivoMisOrdenes; cargarOrdenesVivo(1)"
-                    class="px-3 py-1 bg-slate-900 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-sm">
-              <i class="fa-solid fa-arrow-right-arrow-left text-[10px]"></i>
-              <span>{{ filtroVivoMisOrdenes ? 'Ver Toda la Empresa' : 'Ver Solo Mis Órdenes' }}</span>
-            </button>
-          </div>
-
+        <!-- Tarjeta Derecha: DATOS DEL USUARIO -->
+        <div class="lg:col-span-8 bg-slate-800/90 border border-slate-700/80 px-4 py-2.5 rounded-xl shadow-md flex items-center">
+          <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">{{ usuarioActivo }}</h2>
         </div>
 
-      </section>
-
-      <!-- Monitor local de seguimiento y cartera sin responsable -->
-      <section v-if="puedeReasignarCartera" class="mx-2 sm:mx-5 mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <button type="button" @click="seguimientoExpandido = !seguimientoExpandido"
-                :aria-expanded="seguimientoExpandido" aria-controls="seguimiento-ocs-panel"
-                class="flex w-full flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50/90 px-4 py-3 text-left hover:bg-slate-100/80 transition">
-          <span class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-100 text-amber-700">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-          </span>
-          <span class="text-sm font-black uppercase tracking-wide text-slate-800">Seguimiento de OCs</span>
-          <span class="rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700">{{ resumenSeguimiento.total }} OCs monitoreadas</span>
-          <span class="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700">Sin movimiento &gt;60 días: {{ resumenSeguimiento.limbo }}</span>
-          <span v-if="esAdminSeguimiento" class="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-800">Sin responsable: {{ resumenSeguimiento.sin_responsable }}</span>
-          <i class="fa-solid ml-auto text-slate-500" :class="seguimientoExpandido ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </button>
-        <div v-if="seguimientoExpandido" id="seguimiento-ocs-panel">
-        <div class="flex flex-col gap-3 border-b border-slate-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
-          <p class="text-[11px] text-slate-500">El contador inicia cuando se activa este monitor; la reasignación no reinicia la inactividad.</p>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" @click="cambiarFiltroSeguimiento('todas')"
-                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'todas' ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
-              {{ esAdminSeguimiento ? 'Todas las OCs' : 'Mis OCs asignadas' }}
-            </button>
-            <button type="button" @click="cambiarFiltroSeguimiento('limbo')"
-                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'limbo' ? 'bg-rose-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
-              Más de 60 días
-            </button>
-            <button v-if="esAdminSeguimiento" type="button" @click="cambiarFiltroSeguimiento('sin_responsable')"
-                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition"
-                    :class="filtroSeguimiento === 'sin_responsable' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'">
-              Sin responsable
-            </button>
-            <button type="button" @click="cargarSeguimiento(paginaSeguimiento)" :disabled="cargandoSeguimiento"
-                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50">
-              <i class="fa-solid fa-rotate" :class="{ 'fa-spin': cargandoSeguimiento }"></i>
-              Actualizar
-            </button>
-            <button v-if="puedeReasignarCartera && ordenesSeguimientoSeleccionadas.length"
-                    type="button" @click="abrirModalSeguimiento('reasignar')"
-                    class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm transition hover:bg-amber-400">
-              Reasignar seleccionadas ({{ ordenesSeguimientoSeleccionadas.length }})
-            </button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[1050px] text-left text-xs">
-            <thead class="bg-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-              <tr>
-                <th v-if="puedeReasignarCartera" class="px-3 py-2.5">
-                  <button type="button" @click="seleccionarPaginaSeguimiento" class="text-indigo-600 hover:text-indigo-800 font-bold">Seleccionar página</button>
-                </th>
-                <th class="px-3 py-2.5">OC / Obra</th>
-                <th class="px-3 py-2.5">Proveedor</th>
-                <th class="px-3 py-2.5">Responsable</th>
-                <th class="px-3 py-2.5">Estado</th>
-                <th class="px-3 py-2.5">Última actividad</th>
-                <th class="px-3 py-2.5 text-center">Inactividad</th>
-                <th class="px-3 py-2.5 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 bg-white">
-              <tr v-if="cargandoSeguimiento && !ordenesSeguimiento.length">
-                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-indigo-600 font-semibold">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando seguimiento...
-                </td>
-              </tr>
-              <tr v-else-if="!ordenesSeguimiento.length">
-                <td :colspan="puedeReasignarCartera ? 8 : 7" class="py-8 text-center text-slate-400 font-medium">
-                  No hay órdenes para este filtro.
-                </td>
-              </tr>
-              <template v-for="oc in ordenesSeguimiento" :key="claveOrdenSeguimiento(oc)">
-                <tr class="hover:bg-slate-50/90 transition">
-                  <td v-if="puedeReasignarCartera" class="px-3 py-2.5">
-                    <input type="checkbox" :checked="seguimientoSeleccionado(oc)"
-                           :disabled="!seguimientoSeleccionado(oc) && ordenesSeguimientoSeleccionadas.length >= 100"
-                           @change="alternarSeleccionSeguimiento(oc)" aria-label="Seleccionar OC para reasignar cartera">
-                  </td>
-                  <td class="px-3 py-2.5">
-                    <strong class="text-slate-900">#{{ oc.numero_oc }}</strong>
-                    <span class="ml-1 font-semibold text-slate-500">{{ oc.centro_costos }}</span>
-                  </td>
-                  <td class="max-w-[220px] truncate px-3 py-2.5 text-slate-800 font-medium" :title="oc.proveedor">{{ oc.proveedor || 'Sin proveedor' }}</td>
-                  <td class="px-3 py-2.5">
-                    <span v-if="oc.responsable_nombre" class="text-slate-700 font-medium">{{ oc.responsable_nombre }}</span>
-                    <span v-else class="inline-block rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800">Sin responsable</span>
-                  </td>
-                  <td class="px-3 py-2.5">
-                    <span class="rounded-md border px-2 py-1 text-[10px] font-bold"
-                          :class="['CERRADA', 'CANCELADA'].includes(oc.estado_seguimiento) ? 'border-slate-300 bg-slate-100 text-slate-600' : (oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-emerald-300 bg-emerald-50 text-emerald-700')">
-                      {{ oc.estado_seguimiento === 'EN_ESPERA_PROVEEDOR' ? 'ESPERA PROVEEDOR' : oc.estado_seguimiento }}
-                    </span>
-                  </td>
-                  <td class="px-3 py-2.5 text-slate-600 text-xs">
-                    {{ formatearFechaSeguimiento(oc.ultima_actividad) }}
-                    <span v-if="!oc.ultimo_movimiento_tipo" class="ml-1 text-[10px] text-slate-400">Inicio del monitor</span>
-                  </td>
-                  <td class="px-3 py-2.5 text-center">
-                    <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-black"
-                          :class="oc.en_limbo ? 'border border-rose-300 bg-rose-50 text-rose-700' : 'border border-slate-200 bg-slate-100 text-slate-700'">
-                      {{ oc.dias_sin_movimiento }} días
-                    </span>
-                  </td>
-                  <td class="px-3 py-2.5">
-                    <div class="flex justify-end gap-1.5">
-                      <button type="button" @click="cargarHistorialSeguimiento(oc)" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-slate-700 hover:bg-slate-100 shadow-sm transition" title="Ver bitácora">
-                        <i class="fa-solid fa-list"></i>
-                      </button>
-                      <button type="button" @click="abrirModalSeguimiento('nota', oc)" class="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-indigo-700 hover:bg-indigo-100 shadow-sm transition" title="Registrar movimiento">
-                        <i class="fa-solid fa-pen"></i>
-                      </button>
-                      <button type="button" @click="abrirModalSeguimiento('estado', oc)" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700 hover:bg-emerald-100 shadow-sm transition" title="Cambiar estado">
-                        <i class="fa-solid fa-flag"></i>
-                      </button>
-                      <button v-if="puedeReasignarCartera" type="button" @click="abrirModalSeguimiento('reasignar', oc)" class="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-800 hover:bg-amber-100 shadow-sm transition" title="Reasignar OC">
-                        <i class="fa-solid fa-user-gear"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="historialSeguimientoOC === claveOrdenSeguimiento(oc)" class="bg-slate-50/90">
-                  <td :colspan="puedeReasignarCartera ? 8 : 7" class="px-4 py-3">
-                    <div v-if="cargandoHistorialSeguimiento" class="text-center text-indigo-600 font-semibold">Cargando bitácora...</div>
-                    <div v-else-if="!historialSeguimiento.length" class="text-center text-slate-400">Sin movimientos registrados desde que inició el monitor.</div>
-                    <div v-else class="space-y-2">
-                      <div v-for="(movimiento, indice) in historialSeguimiento" :key="indice" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                        <div>
-                          <strong class="text-indigo-700">{{ movimiento.tipo }}</strong>
-                          <span class="ml-2 text-slate-700">{{ movimiento.descripcion || 'Sin detalle' }}</span>
-                          <span v-if="movimiento.metadata && movimiento.metadata.responsable_anterior_nombre" class="ml-2 font-bold text-amber-700">
-                            {{ movimiento.metadata.responsable_anterior_nombre }} → {{ movimiento.metadata.responsable_nuevo_nombre }}
-                          </span>
-                        </div>
-                        <span class="text-[10px] text-slate-400">{{ movimiento.usuario_nombre || 'Sistema' }} · {{ formatearFechaSeguimiento(movimiento.creado_en) }}</span>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-        <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-          <span class="font-medium">{{ resumenSeguimiento.total }} OC(s) en seguimiento</span>
-          <div class="flex items-center gap-2">
-            <button type="button" @click="cargarSeguimiento(paginaSeguimiento - 1)" :disabled="paginaSeguimiento <= 1 || cargandoSeguimiento" class="rounded-lg border border-slate-300 bg-white px-3 py-1 font-bold text-slate-700 hover:bg-slate-100 shadow-sm transition disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed">Anterior</button>
-            <span class="font-semibold text-slate-700">Página {{ paginaSeguimiento }} de {{ totalPaginasSeguimiento }}</span>
-            <button type="button" @click="cargarSeguimiento(paginaSeguimiento + 1)" :disabled="paginaSeguimiento >= totalPaginasSeguimiento || cargandoSeguimiento" class="rounded-lg border border-slate-300 bg-white px-3 py-1 font-bold text-slate-700 hover:bg-slate-100 shadow-sm transition disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed">Siguiente</button>
-          </div>
-        </div>
-        </div>
       </section>
 
 <!-- Barra de Filtros de OCs en Vivo -->
-            <!-- BARRA UNIFICADA DE FILTROS Y ACCIONES DE PROGRAMACIÓN -->
-      <!-- SECCIÓN PRINCIPAL: FILTROS DE SEMANA + SEMÁFORO DE ANTIGÜEDAD DE PASIVOS -->
-      <section class="mx-2 sm:mx-5 mb-5 grid grid-cols-1 xl:grid-cols-12 gap-3.5 items-stretch">
+      <!-- SECCIÓN PRINCIPAL: FILTROS DE SEMANA Y PROGRAMACIÓN MASIVA (TODO EN UNA LÍNEA) -->
+      <section class="mx-2 sm:mx-5 mb-4 bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl shadow-sm flex items-center justify-between flex-wrap gap-2.5">
         
-        <!-- BLOQUE IZQUIERDO: SEMANA DE CORTE Y PROGRAMACIÓN (Compacto y en paleta clara) -->
-        <div class="xl:col-span-7 bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm flex flex-col justify-between space-y-3">
-          
-          <!-- Fila 1: Semana de Corte, selector de temporalidad, buscador y refrescar -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <!-- Filtro Semana de Corte (más compacto) -->
-            <div class="min-w-[155px]">
-              <div class="flex items-center justify-between mb-1 px-0.5">
-                <span class="text-[10px] font-bold text-slate-500 uppercase">Semana de Corte</span>
-                <button v-if="semanaActualOficial" 
-                        @click="filtroVivoSemana = semanaActualOficial.etiqueta; semanaCorteMasiva = semanaActualOficial.etiqueta; cargarOrdenesVivo(1)" 
-                        class="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 cursor-pointer" 
-                        :title="'Semana en curso oficial (' + semanaActualOficial.fecha_inicio + ' al ' + semanaActualOficial.fecha_final + ')'">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span>{{ semanaActualOficial.etiqueta }}</span>
-                </button>
-              </div>
-              <select v-model="filtroVivoSemana" @change="onCambioSemanaCorteFiltro" 
-                      :disabled="!listaSemanas.length && !semanaActualOficial"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-emerald-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                <option v-if="semanaActualOficial && !listaSemanas.includes(semanaActualOficial.etiqueta)" :value="semanaActualOficial.etiqueta" class="bg-white text-slate-800">
-                  {{ semanaActualOficial.etiqueta }} (En Curso)
-                </option>
-                <option v-for="s in listaSemanas" :key="s" :value="s" class="bg-white text-slate-800">
-                  {{ s === (semanaActualOficial && semanaActualOficial.etiqueta) ? s + ' (En Curso)' : s }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Selector Rápido: Sólo Hoy vs Toda la Semana -->
-            <div class="flex items-center self-end bg-slate-100 border border-slate-200 rounded-lg p-0.5 shadow-inner">
-              <button type="button" @click="filtroVivoTemporal = 'HOY'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
-                      class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-                      :class="filtroVivoTemporal === 'HOY' && !filtroSemaforoAntiguedad ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
-                <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-white' : 'bg-emerald-500'"></span>
-                <span>Sólo Hoy ({{ kpisVivo.ordenes_hoy }})</span>
-              </button>
-              <button type="button" @click="filtroVivoTemporal = 'SEMANA'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
-                      class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-                      :class="filtroVivoTemporal !== 'HOY' && !filtroSemaforoAntiguedad ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
-                <i class="fa-solid fa-calendar-days text-[10px]"></i>
-                <span>Toda la Semana</span>
-              </button>
-            </div>
-
-            <!-- Buscador y botón refrescar -->
-            <div class="flex items-center gap-2 flex-1 self-end">
-              <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
-                <input type="text" v-model="filtroVivoBusqueda" @keyup.enter="cargarOrdenesVivo(1)" @input="debounceBusquedaVivo"
-                       :placeholder="perfilUsuario && (perfilUsuario.rol === 'ADMIN' || perfilUsuario.es_admin_funcional) ? 'Buscar # OC, Folio, Obra, Comprador/Solicitó...' : 'Buscar por # O.C., Folio EK10, Proveedor, Obra...'"
-                       class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white shadow-xs">
-              </div>
-              <button @click="sincronizarOrdenesVivo(true)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs" title="Refrescar órdenes en tiempo real">
-                <i class="fa-solid fa-rotate text-xs text-slate-500" :class="{'fa-spin': cargandoVivo}"></i>
-                <span class="hidden sm:inline">Refrescar</span>
-              </button>
-            </div>
+        <!-- Bloque Izquierdo: Semana de Corte, Selector Temporal, Buscador Compacto y Refrescar -->
+        <div class="flex items-center gap-2 flex-wrap flex-1 min-w-[280px]">
+          <!-- Filtro Semana de Corte -->
+          <div class="min-w-[145px] sm:min-w-[160px]">
+            <select v-model="filtroVivoSemana" @change="onCambioSemanaCorteFiltro" 
+                    :disabled="!listaSemanas.length && !semanaActualOficial"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-xs"
+                    :title="semanaActualOficial ? 'Semana en curso oficial (' + semanaActualOficial.fecha_inicio + ' al ' + semanaActualOficial.fecha_final + ')' : 'Seleccionar semana'">
+              <option v-if="semanaActualOficial && !listaSemanas.includes(semanaActualOficial.etiqueta)" :value="semanaActualOficial.etiqueta" class="bg-white text-slate-800">
+                {{ semanaActualOficial.etiqueta }} (En Curso)
+              </option>
+              <option v-for="s in listaSemanas" :key="s" :value="s" class="bg-white text-slate-800">
+                {{ s === (semanaActualOficial && semanaActualOficial.etiqueta) ? s + ' (En Curso)' : s }}
+              </option>
+            </select>
           </div>
 
-          <!-- Fila 2: Filtro Obra, Pagar 100%, Totalizador y Guardar Todo -->
-          <div class="pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2.5">
-            <div class="flex items-center gap-2 flex-wrap">
-              <div class="relative w-44 sm:w-52">
-                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                <input id="filtro-clave-obra"
-                       v-model="filtroVivoObra"
-                       @change="aplicarFiltroObra"
-                       @focus="mostrarSugerenciasObra = true"
-                       @input="mostrarSugerenciasObra = true"
-                       @keyup.enter="obrasSugeridasVivo.length ? seleccionarObraVivo(obrasSugeridasVivo[0]) : aplicarFiltroObra()"
-                       @keydown.esc="mostrarSugerenciasObra = false"
-                       @blur="mostrarSugerenciasObra = false"
-                       aria-label="Buscar obra"
-                       placeholder="Buscar obra..."
-                       autocomplete="off"
-                       class="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-7 pr-7 text-xs text-slate-800 placeholder:text-slate-400 shadow-xs transition focus:border-emerald-500 focus:bg-white focus:outline-none">
-                <button v-if="filtroVivoObra" type="button" @click="filtroVivoObra = ''; aplicarFiltroObra()"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700" title="Limpiar búsqueda">
-                  <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
-                <div v-if="mostrarSugerenciasObra && obrasSugeridasVivo.length"
-                     class="absolute left-0 top-full z-30 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-xl">
-                  <button v-for="obra in obrasSugeridasVivo" :key="obra" type="button"
-                          @mousedown.prevent="seleccionarObraVivo(obra)"
-                          class="block w-full rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
-                    {{ obra }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Botones de Acción Masiva -->
-              <button type="button" @click="llenarTodasConSaldo" 
-                      class="px-2.5 py-1.5 bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
-                      title="Poner el 100% de saldo a todas las órdenes visibles">
-                <i class="fa-solid fa-bolt-lightning text-xs text-emerald-600"></i>
-                <span>Pagar 100%</span>
-              </button>
-              <button type="button" @click="limpiarTodosLosInputs" v-if="ordenesListasParaGuardar.length > 0"
-                      class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition cursor-pointer"
-                      title="Limpiar montos capturados">
-                <i class="fa-solid fa-eraser"></i>
-              </button>
-            </div>
-
-            <!-- Totalizador y Guardar -->
-            <div class="flex items-center gap-3">
-              <div class="text-right">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  CAPTURADAS: <strong class="text-slate-800">{{ ordenesListasParaGuardar.length }}</strong> de {{ ordenesFiltradasObra.length }}
-                </div>
-                <div class="text-lg font-mono font-extrabold text-emerald-600 leading-tight">
-                  ${{ formatearNumero(totalMontoLote) }}
-                </div>
-              </div>
-
-              <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0 || ordenesConMontoExcedido.length > 0"
-                      class="px-3.5 py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider">
-                <i class="fa-solid" :class="guardandoLote ? 'fa-spinner fa-spin' : 'fa-floppy-disk text-xs'"></i>
-                <span>{{ guardandoLote ? 'GUARDANDO...' : 'GUARDAR (' + ordenesListasParaGuardar.length + ')' }}</span>
-              </button>
-            </div>
+          <!-- Selector Rápido: Sólo Hoy vs Toda la Semana -->
+          <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5 shadow-inner">
+            <button type="button" @click="filtroVivoTemporal = 'HOY'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
+                    class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    :class="filtroVivoTemporal === 'HOY' && !filtroSemaforoAntiguedad ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
+              <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-emerald-400' : 'bg-slate-400'"></span>
+              <span>Sólo Hoy ({{ kpisVivo.ordenes_hoy }})</span>
+            </button>
+            <button type="button" @click="filtroVivoTemporal = 'SEMANA'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
+                    class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    :class="filtroVivoTemporal !== 'HOY' && !filtroSemaforoAntiguedad ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
+              <i class="fa-solid fa-calendar-days text-[10px]"></i>
+              <span>Toda la Semana</span>
+            </button>
           </div>
+
+          <!-- Buscador Reducido -->
+          <div class="relative w-48 sm:w-56 lg:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" v-model="filtroVivoBusqueda" @keyup.enter="cargarOrdenesVivo(1)" @input="debounceBusquedaVivo"
+                   :placeholder="perfilUsuario && (perfilUsuario.rol === 'ADMIN' || perfilUsuario.es_admin_funcional) ? 'Buscar # OC, Folio, Obra...' : 'Buscar # OC, Prov, Obra...'"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white shadow-xs">
+          </div>
+
+          <!-- Botón Refrescar -->
+          <button @click="sincronizarOrdenesVivo(true)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer shadow-xs" title="Refrescar órdenes en tiempo real">
+            <i class="fa-solid fa-rotate text-xs text-slate-500" :class="{'fa-spin': cargandoVivo}"></i>
+            <span class="hidden xl:inline">Refrescar</span>
+          </button>
+
+          <!-- Botón Limpiar (si hay montos capturados) -->
+          <button type="button" @click="limpiarTodosLosInputs" v-if="ordenesListasParaGuardar.length > 0"
+                  class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition cursor-pointer"
+                  title="Limpiar montos capturados">
+            <i class="fa-solid fa-eraser"></i>
+          </button>
         </div>
 
-        <!-- BLOQUE DERECHO: TARJETAS DEL SEMÁFORO DE ANTIGÜEDAD DE PASIVOS -->
-        <div class="xl:col-span-5 bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200">
-            <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Semáforo de Antigüedad (Pasivos)</h3>
+        <!-- Bloque Derecho: Totalizador y Botón Guardar -->
+        <div class="flex items-center gap-3 ml-auto">
+          <div class="text-right">
+            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              CAPTURADAS: <strong class="text-slate-800">{{ ordenesListasParaGuardar.length }}</strong> de {{ ordenesFiltradasObra.length }}
             </div>
-            <button v-if="filtroSemaforoAntiguedad" @click="filtrarPorSemaforo('')" 
-                    class="text-xs font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 underline cursor-pointer"
-                    title="Quitar filtro de antigüedad">
-              <i class="fa-solid fa-filter-circle-xmark"></i> Quitar Filtro ({{ filtroSemaforoAntiguedad }})
-            </button>
-            <span v-else class="text-[10px] text-slate-500">Clic en tarjeta para priorizar</span>
+            <div class="text-sm font-mono font-extrabold text-emerald-600 leading-tight">
+              ${{ formatearNumero(totalMontoLote) }}
+            </div>
           </div>
 
-          <!-- Cuadrícula de 4 Tarjetas de Semáforo (Paleta Limpia y Letras Claras) -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            
-            <!-- 1. Tarjeta VERDE (30d) -->
-            <button type="button" @click="filtrarPorSemaforo('VERDE')"
-                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
-                    :class="filtroSemaforoAntiguedad === 'VERDE' ? 'bg-emerald-100 border-2 border-emerald-600 ring-2 ring-emerald-500/40 shadow-sm' : 'bg-emerald-50/80 border-2 border-emerald-300/80 hover:border-emerald-500 hover:bg-emerald-100/60'">
-              <div class="flex items-center justify-between text-xs font-black text-emerald-800 mb-1">
-                <span class="flex items-center gap-1">🟢 30d</span>
-                <span class="px-2 py-0.5 rounded-md bg-emerald-200 text-emerald-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.verde.cantidad }}</span>
-              </div>
-              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.verde.monto)">
-                ${{ formatearNumero(conteoSemaforo.verde.monto) }}
-              </div>
-            </button>
-
-            <!-- 2. Tarjeta AMARILLO (30-90d) -->
-            <button type="button" @click="filtrarPorSemaforo('AMARILLO')"
-                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
-                    :class="filtroSemaforoAntiguedad === 'AMARILLO' ? 'bg-amber-100 border-2 border-amber-600 ring-2 ring-amber-500/40 shadow-sm' : 'bg-amber-50/80 border-2 border-amber-300/80 hover:border-amber-500 hover:bg-amber-100/60'">
-              <div class="flex items-center justify-between text-xs font-black text-amber-800 mb-1">
-                <span class="flex items-center gap-1">🟡 30-90d</span>
-                <span class="px-2 py-0.5 rounded-md bg-amber-200 text-amber-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.amarillo.cantidad }}</span>
-              </div>
-              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.amarillo.monto)">
-                ${{ formatearNumero(conteoSemaforo.amarillo.monto) }}
-              </div>
-            </button>
-
-            <!-- 3. Tarjeta NARANJA (90-180d) -->
-            <button type="button" @click="filtrarPorSemaforo('NARANJA')"
-                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
-                    :class="filtroSemaforoAntiguedad === 'NARANJA' ? 'bg-orange-100 border-2 border-orange-600 ring-2 ring-orange-500/40 shadow-sm' : 'bg-orange-50/80 border-2 border-orange-300/80 hover:border-orange-500 hover:bg-orange-100/60'">
-              <div class="flex items-center justify-between text-xs font-black text-orange-800 mb-1">
-                <span class="flex items-center gap-1">🟠 90-180d</span>
-                <span class="px-2 py-0.5 rounded-md bg-orange-200 text-orange-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.naranja.cantidad }}</span>
-              </div>
-              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.naranja.monto)">
-                ${{ formatearNumero(conteoSemaforo.naranja.monto) }}
-              </div>
-            </button>
-
-            <!-- 4. Tarjeta ROJO (180d) -->
-            <button type="button" @click="filtrarPorSemaforo('ROJO')"
-                    class="p-2.5 rounded-xl text-left transition relative cursor-pointer"
-                    :class="filtroSemaforoAntiguedad === 'ROJO' ? 'bg-rose-100 border-2 border-rose-600 ring-2 ring-rose-500/40 shadow-sm' : 'bg-rose-50/80 border-2 border-rose-300/80 hover:border-rose-500 hover:bg-rose-100/60'">
-              <div class="flex items-center justify-between text-xs font-black text-rose-800 mb-1">
-                <span class="flex items-center gap-1">🔴 180d</span>
-                <span class="px-2 py-0.5 rounded-md bg-rose-200 text-rose-950 font-black text-xs font-mono shadow-xs">{{ conteoSemaforo.rojo.cantidad }}</span>
-              </div>
-              <div class="text-sm font-mono font-black text-slate-900 truncate" :title="'$' + formatearNumero(conteoSemaforo.rojo.monto)">
-                ${{ formatearNumero(conteoSemaforo.rojo.monto) }}
-              </div>
-            </button>
-
-          </div>
-
-          <!-- Alerta destacada: Adeudos 1 año reclamados por proveedores (Paleta limpia, sin mayor/menor) -->
-          <div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-1 text-xs">
-            <button type="button" @click="filtrarPorSemaforo('MAS_UN_ANO')"
-                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer"
-                    :class="filtroSemaforoAntiguedad === 'MAS_UN_ANO' ? 'bg-rose-100 border-2 border-rose-600 text-rose-950 ring-2 ring-rose-400/30 shadow-sm' : 'bg-rose-50/80 border border-rose-300 text-rose-900 hover:bg-rose-100 hover:border-rose-400'">
-              <i class="fa-solid fa-triangle-exclamation text-rose-600 text-xs"></i>
-              <span class="font-bold">Adeudos 1 año (Reclamo Proveedor):</span>
-              <span class="font-mono font-black text-rose-950 ml-1">{{ conteoSemaforo.rojo.mas_un_ano }} OCs</span>
-              <span class="font-mono font-bold text-rose-700 ml-1">(${{ formatearNumero(conteoSemaforo.rojo.monto_mas_un_ano) }})</span>
-            </button>
-            <span class="text-[10px] text-slate-500 font-semibold">Priorizar en pagos programados</span>
-          </div>
-
+          <button @click="guardarLoteMasivo" :disabled="guardandoLote || ordenesListasParaGuardar.length === 0 || ordenesConMontoExcedido.length > 0"
+                  class="px-3.5 py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider">
+            <i class="fa-solid" :class="guardandoLote ? 'fa-spinner fa-spin' : 'fa-floppy-disk text-xs'"></i>
+            <span>{{ guardandoLote ? 'GUARDANDO...' : 'GUARDAR (' + ordenesListasParaGuardar.length + ')' }}</span>
+          </button>
         </div>
 
       </section>
 
 <!-- Tabla de Órdenes de Compra en Vivo (Edición en Línea Masiva) -->
       <div class="mx-2 sm:mx-5 bg-slate-800/80 border border-slate-700/80 rounded-2xl shadow-xl overflow-hidden mb-6">
-        <div class="p-3.5 border-b border-slate-700/80 flex items-center justify-between flex-wrap gap-2 bg-slate-850">
-          <div></div>
+        <!-- Barra Superior de la Tabla: Mini Semáforo Integrado + Paginación -->
+        <div class="p-2.5 sm:px-4 sm:py-3 border-b border-slate-700/80 flex items-center justify-between flex-wrap gap-2.5 bg-slate-850">
+          
+          <!-- Mini Recuadros de Semáforo de Antigüedad (Directo sobre la tabla) -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-0.5 select-none">
+              <i class="fa-solid fa-traffic-light text-slate-400"></i> Antigüedad:
+            </span>
+
+            <!-- 1. Mini Recuadro VERDE (30d) -->
+            <button type="button" @click="filtrarPorSemaforo('VERDE')"
+                    :title="'30 días: $' + formatearNumero(conteoSemaforo.verde.monto) + ' (' + conteoSemaforo.verde.cantidad + ' OCs)'"
+                    class="px-2 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer select-none"
+                    :class="filtroSemaforoAntiguedad === 'VERDE'
+                      ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 ring-2 ring-emerald-500/40 shadow-sm'
+                      : 'bg-slate-800/90 border-emerald-600/50 text-emerald-300 hover:bg-emerald-950/50 hover:border-emerald-400'">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-xs"></span>
+              <span>30d</span>
+              <span class="px-1.5 py-0.2 rounded font-mono font-black text-[11px] bg-emerald-900/80 text-emerald-100 border border-emerald-700/60">
+                {{ conteoSemaforo.verde.cantidad.toLocaleString() }}
+              </span>
+            </button>
+
+            <!-- 2. Mini Recuadro AMARILLO (30-90d) -->
+            <button type="button" @click="filtrarPorSemaforo('AMARILLO')"
+                    :title="'30 a 90 días: $' + formatearNumero(conteoSemaforo.amarillo.monto) + ' (' + conteoSemaforo.amarillo.cantidad + ' OCs)'"
+                    class="px-2 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer select-none"
+                    :class="filtroSemaforoAntiguedad === 'AMARILLO'
+                      ? 'bg-amber-950/90 border-amber-400 text-amber-200 ring-2 ring-amber-500/40 shadow-sm'
+                      : 'bg-slate-800/90 border-amber-600/50 text-amber-300 hover:bg-amber-950/50 hover:border-amber-400'">
+              <span class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-xs"></span>
+              <span>30-90d</span>
+              <span class="px-1.5 py-0.2 rounded font-mono font-black text-[11px] bg-amber-900/80 text-amber-100 border border-amber-700/60">
+                {{ conteoSemaforo.amarillo.cantidad.toLocaleString() }}
+              </span>
+            </button>
+
+            <!-- 3. Mini Recuadro NARANJA (90-180d) -->
+            <button type="button" @click="filtrarPorSemaforo('NARANJA')"
+                    :title="'90 a 180 días: $' + formatearNumero(conteoSemaforo.naranja.monto) + ' (' + conteoSemaforo.naranja.cantidad + ' OCs)'"
+                    class="px-2 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer select-none"
+                    :class="filtroSemaforoAntiguedad === 'NARANJA'
+                      ? 'bg-orange-950/90 border-orange-400 text-orange-200 ring-2 ring-orange-500/40 shadow-sm'
+                      : 'bg-slate-800/90 border-orange-600/50 text-orange-300 hover:bg-orange-950/50 hover:border-orange-400'">
+              <span class="w-2 h-2 rounded-full bg-orange-400 inline-block shadow-xs"></span>
+              <span>90-180d</span>
+              <span class="px-1.5 py-0.2 rounded font-mono font-black text-[11px] bg-orange-900/80 text-orange-100 border border-orange-700/60">
+                {{ conteoSemaforo.naranja.cantidad.toLocaleString() }}
+              </span>
+            </button>
+
+            <!-- 4. Mini Recuadro ROJO (180d) -->
+            <button type="button" @click="filtrarPorSemaforo('ROJO')"
+                    :title="'180 días o más: $' + formatearNumero(conteoSemaforo.rojo.monto) + ' (' + conteoSemaforo.rojo.cantidad + ' OCs)'"
+                    class="px-2 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer select-none"
+                    :class="filtroSemaforoAntiguedad === 'ROJO'
+                      ? 'bg-rose-950/90 border-rose-400 text-rose-200 ring-2 ring-rose-500/40 shadow-sm'
+                      : 'bg-slate-800/90 border-rose-600/50 text-rose-300 hover:bg-rose-950/50 hover:border-rose-400'">
+              <span class="w-2 h-2 rounded-full bg-rose-400 inline-block shadow-xs"></span>
+              <span>180d</span>
+              <span class="px-1.5 py-0.2 rounded font-mono font-black text-[11px] bg-rose-900/80 text-rose-100 border border-rose-700/60">
+                {{ conteoSemaforo.rojo.cantidad.toLocaleString() }}
+              </span>
+            </button>
+
+            <!-- 5. Mini Recuadro RECLAMO 1 AÑO -->
+            <button type="button" @click="filtrarPorSemaforo('MAS_UN_ANO')"
+                    :title="'Adeudos 1 año (Reclamo Proveedor): $' + formatearNumero(conteoSemaforo.rojo.monto_mas_un_ano) + ' (' + conteoSemaforo.rojo.mas_un_ano + ' OCs)'"
+                    class="px-2 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer select-none"
+                    :class="filtroSemaforoAntiguedad === 'MAS_UN_ANO'
+                      ? 'bg-rose-950/95 border-rose-500 text-rose-100 ring-2 ring-rose-500/50 shadow-sm'
+                      : 'bg-slate-800/90 border-rose-700/50 text-rose-300 hover:bg-rose-950/60 hover:border-rose-400'">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i>
+              <span>1 año</span>
+              <span class="px-1.5 py-0.2 rounded font-mono font-black text-[11px] bg-rose-900/80 text-rose-100 border border-rose-700/60">
+                {{ conteoSemaforo.rojo.mas_un_ano }}
+              </span>
+            </button>
+
+            <!-- Botón Quitar Filtro Activo -->
+            <button v-if="filtroSemaforoAntiguedad" type="button" @click="filtrarPorSemaforo('')"
+                    class="ml-1 px-2 py-1 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-xmark text-xs"></i>
+              <span>Quitar ({{ filtroSemaforoAntiguedad }})</span>
+            </button>
+          </div>
+
           <!-- Paginación arriba -->
           <div class="flex items-center gap-2 text-xs">
             <button @click="cargarOrdenesVivo(paginaVivo - 1)" :disabled="paginaVivo <= 1 || cargandoVivo"
                     class="px-2.5 py-1 bg-slate-700 disabled:opacity-30 rounded text-slate-300 hover:text-white cursor-pointer disabled:cursor-not-allowed">
               <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <span class="text-slate-400">Pág. {{ paginaVivo }} de {{ totalPaginasVivo }}</span>
+            <span class="text-slate-400 font-medium">Pág. {{ paginaVivo }} de {{ totalPaginasVivo }}</span>
             <button @click="cargarOrdenesVivo(paginaVivo + 1)" :disabled="paginaVivo >= totalPaginasVivo || cargandoVivo"
                     class="px-2.5 py-1 bg-slate-700 disabled:opacity-30 rounded text-slate-300 hover:text-white cursor-pointer disabled:cursor-not-allowed">
               <i class="fa-solid fa-chevron-right"></i>
@@ -945,31 +707,32 @@
                 <th class="py-2.5 px-3 w-24 text-center">FECHA</th>
                 <th class="py-2.5 px-3 min-w-[180px]">PROVEEDOR / CONTRATISTA</th>
                 <th class="py-2.5 px-3 w-24 text-right">IMPORTE ($)</th>
-                <th class="py-2.5 px-3 w-24 text-right text-teal-400" title="Total recibido físicamente en almacén / remisiones">RECIBIDO ($)</th>
-                <th class="py-2.5 px-3 w-24 text-right text-sky-400" title="Total de facturas registradas por contabilidad">FACTURADO ($)</th>
-                <th class="py-2.5 px-3 min-w-[145px] w-36 text-center text-cyan-300" title="Macroclasificación Enkontrol (1, 2, 4, 7)">TIPO</th>
-                <th class="py-2.5 px-3 min-w-[155px] w-44 text-center text-indigo-300" title="Especialidad o rubro de la obra">RUBRO</th>
-                <th class="py-2.5 px-3 w-36 text-center text-emerald-400 bg-emerald-950/20 border-x border-emerald-500/30">
+                <th class="py-2.5 px-3 w-24 text-right" title="Total recibido físicamente en almacén / remisiones">RECIBIDO ($)</th>
+                <th class="py-2.5 px-3 w-24 text-right" title="Total de facturas registradas por contabilidad">FACTURADO ($)</th>
+                <th class="py-2.5 px-3 min-w-[145px] w-36 text-center" title="Macroclasificación Enkontrol (1, 2, 4, 7)">TIPO</th>
+                <th class="py-2.5 px-3 min-w-[155px] w-44 text-center" title="Especialidad o rubro de la obra">RUBRO</th>
+                <th class="py-2.5 px-3 w-36 text-center text-slate-300 bg-slate-800/40 border-x border-slate-700">
                   <span class="flex items-center justify-center gap-1">
                     <i class="fa-solid fa-pencil text-[10px]"></i> IMPORTE A PROGRAMAR ($)
                   </span>
                 </th>
-                <th class="py-2.5 px-3 w-28 text-right text-amber-400">DIFERENCIA ($)</th>
+                <th class="py-2.5 px-3 w-28 text-right">DIFERENCIA ($)</th>
                 <th class="py-2.5 px-3 min-w-[180px] text-slate-300">CONCEPTO / ESTIMACIÓN</th>
                 <th class="py-2.5 px-3 w-32">SOLICITÓ</th>
-                <th class="py-2.5 px-3 w-28 text-center text-indigo-300" title="Adjuntar comprobantes/facturas (2 a 4 archivos)">DOCUMENTOS</th>
+                <th class="py-2.5 px-3 w-28 text-center" title="Adjuntar comprobantes/facturas (2 a 4 archivos)">DOCUMENTOS</th>
                 <th class="py-2.5 px-3 w-20 text-center">HISTORIAL</th>
+                <th v-if="puedeReasignarCartera" class="py-2.5 px-3 w-24 text-center text-amber-400 font-bold" title="Reasignar responsable de la OC">REASIGNAR</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-700/50">
               <tr v-if="cargandoVivo && ordenesVivo.length === 0">
-                <td colspan="16" class="text-center py-10 text-emerald-400">
+                <td :colspan="puedeReasignarCartera ? 17 : 16" class="text-center py-10 text-emerald-400">
                   <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
                   Consultando órdenes de compra en tiempo real...
                 </td>
               </tr>
               <tr v-else-if="ordenesFiltradasObra.length === 0">
-                <td colspan="16" class="text-center py-10 text-slate-500">
+                <td :colspan="puedeReasignarCartera ? 17 : 16" class="text-center py-10 text-slate-500">
                   <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
                   No se encontraron órdenes de compra para los filtros seleccionados.
                 </td>
@@ -977,29 +740,29 @@
               <template v-else v-for="oc in ordenesFiltradasObra" :key="oc.id">
                 <tr class="hover:bg-slate-750/50 transition"
                     :class="{
-                      'bg-emerald-950/25 border-l-4 border-l-emerald-400': Number(oc.inputMonto) > 0,
+                      'bg-slate-800/70 border-l-4 border-l-slate-400': Number(oc.inputMonto) > 0,
                       'bg-slate-800/40': ocExpandidaId === oc.id
                     }">
                   <!-- 1. OBRA -->
-                  <td class="py-2 px-3 text-center font-bold text-amber-300 font-mono">
+                  <td class="py-2 px-3 text-center font-bold text-slate-300 font-mono">
                     {{ oc.centro_costos || 'N/A' }}
                   </td>
 
-                  <!-- 2. OC (Más grande y destacado) -->
-                  <td class="py-2 px-3 text-center font-mono font-black text-indigo-600 text-sm">
+                  <!-- 2. OC -->
+                  <td class="py-2 px-3 text-center font-mono font-bold text-slate-200 text-xs">
                     #{{ oc.numero_oc }}
                   </td>
 
                   <!-- 3. FOLIO EK10 - EK9 -->
                   <td class="py-2 px-3 text-center whitespace-nowrap">
-                    <span v-if="oc.id_ek10" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 shadow-sm" title="Folio EK10 vinculado a Orden EK9">
+                    <span v-if="oc.id_ek10" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono text-slate-300 bg-slate-900 border border-slate-700 shadow-xs" title="Folio EK10 vinculado a Orden EK9">
                       <span>{{ oc.id_ek10 }}</span>
-                      <i class="fa-solid fa-arrow-right-arrow-left text-[9px] text-cyan-400/80"></i>
-                      <span class="text-indigo-300">#{{ oc.numero_oc }}</span>
+                      <i class="fa-solid fa-arrow-right-arrow-left text-[9px] text-slate-500"></i>
+                      <span class="text-slate-400">#{{ oc.numero_oc }}</span>
                     </span>
                     <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-700/80" title="Orden generada directamente en EK9">
                       <span class="text-slate-500 text-[9px]">EK9:</span>
-                      <span class="font-bold text-amber-300">#{{ oc.numero_oc }}</span>
+                      <span class="font-bold text-slate-300">#{{ oc.numero_oc }}</span>
                     </span>
                   </td>
 
@@ -1020,36 +783,26 @@
 
                   <!-- 6.1 RECIBIDO ALMACÉN ($) (INFORMATIVO) -->
                   <td class="py-2 px-3 text-right font-mono font-semibold whitespace-nowrap"
-                      :class="Number(oc.total_rec) > 0 ? 'text-teal-300' : 'text-slate-600'">
+                      :class="Number(oc.total_rec) > 0 ? 'text-slate-300' : 'text-slate-600'">
                     ${{ formatearNumero(oc.total_rec || 0) }}
                   </td>
 
                   <!-- 6.2 FACTURADO ($) (INFORMATIVO) -->
                   <td class="py-2 px-3 text-right font-mono font-semibold whitespace-nowrap"
-                      :class="Number(oc.total_fac) > 0 ? 'text-sky-300' : 'text-slate-600'">
+                      :class="Number(oc.total_fac) > 0 ? 'text-slate-300' : 'text-slate-600'">
                     ${{ formatearNumero(oc.total_fac || 0) }}
                   </td>
 
-                  <!-- 7. TIPO (ASIGNADO POR EL ALGORITMO, SOLO LECTURA) -->
-                  <td class="py-1.5 px-2 text-center whitespace-nowrap">
-                    <span
-                            class="campo-tipo-fijo inline-flex max-w-full items-center justify-center rounded-lg px-2 py-1.5 border text-[11px] font-mono font-bold"
-                            :class="{
-                              'bg-cyan-950/70 text-cyan-300 border-cyan-500/40': (oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(1)'),
-                              'bg-amber-950/70 text-amber-300 border-amber-500/40': (oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(2)'),
-                              'bg-purple-950/70 text-purple-300 border-purple-500/40': (oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(4)'),
-                              'bg-emerald-950/70 text-emerald-300 border-emerald-500/40': (oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(7)'),
-                              'bg-slate-900 text-slate-300 border-slate-700': !(oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(1)') && !(oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(2)') && !(oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(4)') && !(oc.inputTipo || oc.tipo_sugerido || oc.tipo || '').includes('(7)')
-                            }"
-                            :title="'Tipo asignado automáticamente por el sistema: ' + (oc.inputTipo || oc.tipo_sugerido || oc.tipo || '(1) MATERIALES')">
-                      {{ oc.inputTipo || oc.tipo_sugerido || oc.tipo || '(1) MATERIALES' }}
-                    </span>
+                  <!-- 7. TIPO (ASIGNADO POR EL ALGORITMO, SOLO LECTURA, SIN NÚMEROS Y SIN RECUADRO) -->
+                  <td class="py-2 px-3 text-center whitespace-nowrap text-xs font-semibold text-slate-300 font-mono"
+                      :title="'Tipo: ' + limpiarTipo(oc.inputTipo || oc.tipo_sugerido || oc.tipo || 'MATERIALES')">
+                    {{ limpiarTipo(oc.inputTipo || oc.tipo_sugerido || oc.tipo || 'MATERIALES') }}
                   </td>
 
-                  <!-- 7.1 RUBRO / ESPECIALIDAD (SUGERIDO POR SISTEMA + SELECCIONABLE) -->
+                  <!-- 7.1 RUBRO / ESPECIALIDAD (SUGERIDO POR SISTEMA + SELECCIONABLE, COLOR NEUTRO) -->
                   <td class="py-1.5 px-2 text-center min-w-[170px]">
                     <select v-model="oc.inputRubro"
-                            class="campo-rubro w-full text-[11px] font-extrabold uppercase rounded-lg px-2.5 py-1.5 border border-indigo-500/40 bg-indigo-950/60 text-indigo-200 shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition cursor-pointer"
+                            class="campo-rubro w-full text-[11px] font-medium uppercase rounded-lg px-2.5 py-1.5 border border-slate-700 bg-slate-900 text-slate-300 shadow-sm focus:outline-none focus:border-slate-500 transition cursor-pointer"
                             :title="'Rubro sugerido: ' + (oc.rubro_sugerido || 'GENERAL') + '. Puedes seleccionar cualquier rubro del catálogo.'">
                       <option v-if="oc.inputRubro && !catalogoRubrosCompleto.includes(oc.inputRubro)"
                               :value="oc.inputRubro">
@@ -1062,7 +815,7 @@
                   </td>
 
                   <!-- 8. IMPORTE A PROGRAMAR ($) (INPUT DIRECTO EN LÍNEA) -->
-                  <td class="py-1.5 px-2 bg-emerald-950/20 border-x border-emerald-500/20">
+                  <td class="py-1.5 px-2 bg-slate-900/60 border-x border-slate-700">
                     <div class="relative">
                       <span class="absolute left-2 top-2 text-slate-500 font-mono text-[11px]">$</span>
                       <input type="number" step="0.01" min="0" 
@@ -1070,22 +823,16 @@
                              v-model.number="oc.inputMonto"
                              :disabled="(oc.saldo_disponible !== undefined && oc.saldo_disponible <= 0.009)"
                              :placeholder="(oc.saldo_disponible !== undefined && oc.saldo_disponible <= 0.009) ? 'PAGADO 100%' : '0.00'"
-                             class="w-full bg-slate-900 border rounded-lg pl-5 pr-2 py-1.5 text-xs font-mono font-extrabold text-right focus:outline-none focus:ring-2 focus:ring-emerald-400 transition disabled:opacity-40 disabled:bg-slate-950 disabled:cursor-not-allowed disabled:text-slate-500"
-                             :class="excedeSaldoDisponible(oc) ? 'border-rose-500 bg-rose-950/30 text-rose-300' : (Number(oc.inputMonto) > 0 ? 'border-emerald-500 bg-emerald-950/30 text-emerald-300 shadow-sm shadow-emerald-500/20' : 'border-slate-700 text-slate-300')">
+                             class="w-full bg-slate-900 border rounded-lg pl-5 pr-2 py-1.5 text-xs font-mono font-bold text-right focus:outline-none focus:ring-1 focus:ring-slate-400 transition disabled:opacity-40 disabled:bg-slate-950 disabled:cursor-not-allowed disabled:text-slate-500"
+                             :class="excedeSaldoDisponible(oc) ? 'border-rose-500 bg-rose-950/30 text-rose-300' : (Number(oc.inputMonto) > 0 ? 'border-slate-400 bg-slate-800 text-white' : 'border-slate-700 text-slate-300')">
                     </div>
                     <p v-if="excedeSaldoDisponible(oc)" class="mt-1 text-[10px] font-semibold text-rose-300">
                       Excede el saldo disponible: ${{ formatearNumero((oc.saldo_disponible !== undefined && oc.saldo_disponible !== null) ? oc.saldo_disponible : oc.total) }}
                     </p>
                   </td>
                   <!-- 9. DIFERENCIA ($) / SALDO RESTANTE -->
-                  <td class="py-2 px-3 text-right font-mono font-bold whitespace-nowrap">
-                    <span class="inline-block px-1.5 py-0.5 rounded text-[11px]"
-                          :class="{
-                            'text-emerald-300 bg-emerald-500/10 border border-emerald-500/20': (oc.saldo_disponible - (Number(oc.inputMonto) || 0)) <= 0.01,
-                            'text-amber-300 bg-amber-500/10 border border-amber-500/20': (oc.saldo_disponible - (Number(oc.inputMonto) || 0)) > 0.01
-                          }">
-                      ${{ formatearNumero(Math.max(0, (oc.saldo_disponible !== undefined ? oc.saldo_disponible : oc.total) - (Number(oc.inputMonto) || 0))) }}
-                    </span>
+                  <td class="py-2 px-3 text-right font-mono font-medium whitespace-nowrap text-xs text-slate-300">
+                    ${{ formatearNumero(Math.max(0, (oc.saldo_disponible !== undefined ? oc.saldo_disponible : oc.total) - (Number(oc.inputMonto) || 0))) }}
                   </td>
 
                   <!-- 10. CONCEPTO / ESTIMACIÓN (INPUT DIRECTO) -->
@@ -1115,9 +862,9 @@
 
                     <!-- 2. Si ya tiene archivos en pausa / preparados para este pago -->
                     <div v-else-if="archivosPendientesPorOC[claveDocumentosOC(oc)] && archivosPendientesPorOC[claveDocumentosOC(oc)].length > 0">
-                      <button type="button" @click="abrirModalAdjuntarOC(oc)"
+                      <button type="button" @click="abrirModalAdjuntarOC(oc, $event)"
                               class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500 text-slate-950 border border-emerald-400 flex items-center justify-center gap-1 mx-auto shadow-md hover:bg-emerald-400 cursor-pointer transition animate-pulse"
-                              :title="'Archivos en pausa (' + archivosPendientesPorOC[claveDocumentosOC(oc)].length + '). Se guardarán junto con el pago al pulsar GUARDAR TODO.'">
+                              :title="'Archivos en pausa (' + archivosPendientesPorOC[claveDocumentosOC(oc)].length + '). Se guardarán junto con el pago al pulsar GUARDAR.'">
                         <i class="fa-solid fa-circle-check"></i>
                         <span>ADJUNTADO ({{ archivosPendientesPorOC[claveDocumentosOC(oc)].length }})</span>
                       </button>
@@ -1132,9 +879,9 @@
 
                     <!-- 4. Permitir preparar documentos antes de capturar el importe -->
                     <div v-else>
-                      <button type="button" @click="abrirModalAdjuntarOC(oc)"
+                      <button type="button" @click="abrirModalAdjuntarOC(oc, $event)"
                               class="accion-adjuntar-oc px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 mx-auto shadow-sm bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 cursor-pointer"
-                              :title="Number(oc.inputMonto) > 0 ? 'Preparar comprobantes para el pago de $' + formatearNumero(oc.inputMonto) : 'Preparar comprobantes ahora; captura el importe antes de pulsar GUARDAR TODO'">
+                              :title="Number(oc.inputMonto) > 0 ? 'Preparar comprobantes para el pago de $' + formatearNumero(oc.inputMonto) : 'Preparar comprobantes ahora'">
                         <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
                         <span>ADJUNTAR</span>
                       </button>
@@ -1151,11 +898,21 @@
                       <span>{{ (oc.programaciones || []).length }}</span>
                     </button>
                   </td>
+
+                  <!-- 16. REASIGNAR CARTERA / RESPONSABLE (ICONO INDIVIDUAL) -->
+                  <td v-if="puedeReasignarCartera" class="py-1.5 px-2 text-center whitespace-nowrap">
+                    <button type="button" @click="abrirMenuReasignacion(oc)"
+                            class="px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 mx-auto bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-slate-950 cursor-pointer shadow-xs"
+                            title="Reasignar responsable / cartera de esta OC">
+                      <i class="fa-solid fa-user-pen"></i>
+                      <span class="hidden xl:inline text-[10px] font-black">REASIGNAR</span>
+                    </button>
+                  </td>
                 </tr>
 
                 <!-- HISTORIAL DESPLEGABLE DE LA OC (SI DESEA VER PAGOS PREVIOS) -->
                 <tr v-if="ocExpandidaId === oc.id" class="bg-slate-900/90 border-y-2 border-indigo-500/30">
-                  <td colspan="16" class="p-3">
+                  <td :colspan="puedeReasignarCartera ? 17 : 16" class="p-3">
                     <div class="bg-slate-850 border border-slate-700 rounded-xl p-3">
                       <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -1247,8 +1004,8 @@
                 <th class="py-2.5 px-3 w-36 text-center">TIPO</th>
                 <th class="py-2.5 px-3 w-36 text-center">RUBRO</th>
                 <th class="py-2.5 px-4">CONCEPTO / ESTIMACIÓN</th>
-                <th class="py-2.5 px-3 w-28 text-right font-mono text-emerald-400">IMPORTE ($)</th>
-                <th class="py-2.5 px-3 w-28 text-center text-emerald-400">DOCUMENTOS</th>
+                <th class="py-2.5 px-3 w-28 text-right font-mono">IMPORTE ($)</th>
+                <th class="py-2.5 px-3 w-28 text-center" title="Comprobantes">DOCUMENTOS</th>
                 <th class="py-2.5 px-3 w-32 text-center">FECHA REGISTRO</th>
                 <th
                     class="sticky right-0 z-20 w-20 bg-slate-900 py-2.5 px-2 text-center shadow-[-8px_0_12px_-8px_rgba(0,0,0,0.7)]"
@@ -1260,7 +1017,7 @@
               <tr v-if="cargandoProgSemana">
                 <td colspan="10" class="py-8 text-center text-slate-400">
                   <div class="flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-spinner fa-spin text-emerald-400 text-lg"></i>
+                    <i class="fa-solid fa-spinner fa-spin text-slate-400 text-lg"></i>
                     <span>Cargando programaciones guardadas...</span>
                   </div>
                 </td>
@@ -1276,24 +1033,20 @@
               <!-- Filas de programaciones guardadas -->
               <tr v-for="prog in programacionesSemana" :key="prog.id"
                   class="hover:bg-slate-750/70 transition-colors group">
-                <td class="py-2 px-3 text-center font-bold text-amber-400">
+                <td class="py-2 px-3 text-center font-bold text-slate-300 font-mono">
                   {{ prog.centro_costos }}
                 </td>
-                <td class="py-2 px-3 text-center font-bold text-white font-mono">
+                <td class="py-2 px-3 text-center font-bold text-slate-200 font-mono">
                   {{ prog.numero_oc }}
                 </td>
                 <td class="py-2 px-4 text-slate-200 truncate max-w-xs" :title="prog.proveedor">
                   {{ prog.proveedor || 'SIN PROVEEDOR' }}
                 </td>
-                <td class="py-2 px-3 text-center">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-cyan-950/40 text-cyan-300 border-cyan-500/40">
-                    {{ prog.tipo || 'SIN TIPO' }}
-                  </span>
+                <td class="py-2 px-3 text-center whitespace-nowrap text-xs font-semibold text-slate-300 font-mono">
+                  {{ limpiarTipo(prog.tipo || 'MATERIALES') }}
                 </td>
-                <td class="py-2 px-3 text-center">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-indigo-950/40 text-indigo-300 border-indigo-500/40">
-                    {{ prog.rubro || 'SIN RUBRO' }}
-                  </span>
+                <td class="py-2 px-3 text-center whitespace-nowrap text-xs text-slate-300 font-medium uppercase">
+                  {{ prog.rubro || 'SIN RUBRO' }}
                 </td>
                 <td class="py-2 px-4 text-slate-300 italic truncate max-w-sm" :title="prog.concepto">
                   {{ prog.concepto || '—' }}
@@ -1367,105 +1120,80 @@
     <!-- ==================================================== -->
     
     <!-- ==================================================== -->
-    <!-- MODAL PARA ADJUNTAR 2 A 4 DOCUMENTOS A UNA OC       -->
+    <!-- RECUADRO FLOTANTE COMPACTO PARA ADJUNTAR DOCUMENTOS -->
     <!-- ==================================================== -->
-    <div v-if="mostrarModalAdjuntarOC" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-      <div class="modal-adjuntar-card bg-slate-800 border border-slate-700 text-slate-100 rounded-2xl shadow-2xl max-w-lg w-full p-6 transition-all">
-        
-        <!-- Header -->
-        <div class="flex items-start justify-between pb-4 border-b border-slate-700">
-          <div>
-            <span class="text-[10px] font-mono tracking-widest text-indigo-400 font-bold uppercase">
-              GESTIÓN DE EXPEDIENTES OC
-            </span>
-            <h3 class="text-base font-bold text-white flex items-center gap-2 mt-0.5">
-              <i class="fa-solid fa-paperclip text-indigo-400"></i>
-              <span>Adjuntar Documentos a OC #{{ ocParaAdjuntar?.numero_oc }}</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">
-              Obra: <strong class="text-white">{{ ocParaAdjuntar?.centro_costos }}</strong> | Proveedor: <span class="text-slate-300">{{ ocParaAdjuntar?.proveedor }}</span>
-            </p>
-          </div>
-          <button @click="cerrarModalAdjuntarOC" class="text-slate-400 hover:text-white p-1 cursor-pointer">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
+    <!-- Clic exterior transparente para cerrar sin oscurecer la pantalla -->
+    <div v-if="mostrarModalAdjuntarOC" class="fixed inset-0 z-50 bg-black/20" @click="cerrarModalAdjuntarOC"></div>
+
+    <div v-if="mostrarModalAdjuntarOC"
+         :style="estiloPopoverAdjuntar"
+         :class="estiloPopoverAdjuntar ? 'fixed z-50' : 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[350px]'"
+         class="bg-slate-900 border border-slate-700 text-slate-100 rounded-2xl shadow-2xl p-4 transition-all">
+      
+      <!-- Encabezado simple -->
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-paperclip text-emerald-400 text-xs"></i>
+          <h3 class="text-xs font-bold text-white">Adjuntar Documentos</h3>
+          <span class="text-[11px] text-slate-400 font-mono font-bold">#{{ ocParaAdjuntar?.numero_oc }}</span>
         </div>
-
-        <!-- Cuerpo del Modal -->
-        <div class="py-4 space-y-4 text-xs">
-          <div class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 text-indigo-200">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 font-bold text-indigo-300">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>Regla de carga de archivos:</span>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono font-bold text-[11px]">
-                Pago a Programar: {{ Number(ocParaAdjuntar?.inputMonto) > 0 ? '$' + formatearNumero(ocParaAdjuntar.inputMonto) : 'pendiente' }}
-              </span>
-            </div>
-            <p class="mt-1 text-[11px] text-indigo-200/90 leading-relaxed">
-              <span v-if="Number(ocParaAdjuntar?.inputMonto) > 0">Comprobantes para el pago programado de <strong class="text-emerald-300">${{ formatearNumero(ocParaAdjuntar.inputMonto) }}</strong>.</span>
-              <span v-else>Prepara los comprobantes ahora y captura el importe de esta OC antes de pulsar <strong>GUARDAR TODO</strong>.</span>
-              Selecciona entre <strong>2 a 4 archivos</strong> (Factura PDF, XML, Comprobante, Estimación). Los documentos quedan en pausa por OC; GUARDAR TODO guarda el pago y los documentos localmente. El botón de envío solo lo replica a BI.
-            </p>
-            <p class="mt-2 text-[11px] text-amber-200">
-              Si adjuntas varios XML, la suma de sus totales debe ser menor al importe del pago. No se requiere XML si no adjuntas uno.
-            </p>
-            <p v-if="!documentosHabilitados" class="mt-1 text-[11px] text-emerald-200">
-              El XML se valida en este navegador; los archivos no se envían mientras la carga esté desactivada.
-            </p>
-          </div>
-
-          <!-- Input File oculto con drag & drop o click -->
-          <input type="file" ref="inputModalOCDocs" multiple @change="manejarSeleccionModalDocs" class="hidden"
-                 accept=".pdf,.xml,.xlsx,.xls,.docx,.doc,.png,.jpg,.jpeg">
-
-          <div @click="$refs.inputModalOCDocs.click()"
-               class="zona-adjuntar-archivos border-2 border-dashed border-slate-600 hover:border-indigo-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/60 hover:bg-slate-900">
-            <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2 block"></i>
-            <span class="font-bold text-slate-200 block text-xs">Haz clic aquí para seleccionar archivos de tu explorador</span>
-            <span class="text-[11px] text-slate-500 mt-1 block">Puedes seleccionar varios manteniendo presionada la tecla Ctrl o Shift</span>
-          </div>
-
-          <!-- Lista de archivos seleccionados -->
-          <div v-if="archivosParaSubirOC.length > 0" class="space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-300">
-              <span>Archivos seleccionados ({{ archivosParaSubirOC.length }}):</span>
-              <span :class="archivosParaSubirOC.length >= 2 && archivosParaSubirOC.length <= 4 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'">
-                {{ archivosParaSubirOC.length >= 2 && archivosParaSubirOC.length <= 4 ? 'Cantidad óptima (2 a 4)' : (archivosParaSubirOC.length < 2 ? 'Faltan archivos (mínimo 2)' : 'Máximo 4 permitidos') }}
-              </span>
-            </div>
-
-            <div class="max-h-40 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
-              <div v-for="(arch, idx) in archivosParaSubirOC" :key="idx"
-                   class="flex items-center justify-between bg-slate-900/90 border border-slate-700/80 rounded-lg p-2 text-[11px]">
-                <div class="flex items-center gap-2 truncate max-w-[280px]">
-                  <i class="fa-solid fa-file-lines text-indigo-400 text-xs"></i>
-                  <span class="truncate font-medium text-slate-200" :title="arch.name">{{ arch.name }}</span>
-                  <span class="text-[10px] text-slate-500 font-mono">({{ (arch.size / 1024).toFixed(1) }} KB)</span>
-                </div>
-                <button type="button" @click="quitarArchivoModal(idx)" class="text-rose-400 hover:text-rose-300 p-1 cursor-pointer" title="Quitar archivo">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-700">
-          <button @click="cerrarModalAdjuntarOC" type="button"
-                  class="modal-adjuntar-cancelar px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold transition text-slate-300">
-            Cancelar
-          </button>
-          <button @click="subirArchivosOCSeleccionada" :disabled="subiendoArchivosOC || archivosParaSubirOC.length < 2 || archivosParaSubirOC.length > 4"
-                  class="modal-adjuntar-guardar px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 rounded-xl text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            <i class="fa-solid" :class="subiendoArchivosOC ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-            <span>{{ subiendoArchivosOC ? 'SUBIENDO...' : 'GUARDAR ARCHIVOS (' + archivosParaSubirOC.length + ')' }}</span>
-          </button>
-        </div>
-
+        <button @click="cerrarModalAdjuntarOC" class="text-slate-400 hover:text-white p-0.5 cursor-pointer" title="Cerrar">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
       </div>
+
+      <!-- Cuerpo compacto sin textos redundantes -->
+      <div class="py-3 space-y-2.5 text-xs">
+        <!-- Input File oculto -->
+        <input type="file" ref="inputModalOCDocs" multiple @change="manejarSeleccionModalDocs" class="hidden"
+               accept=".pdf,.xml,.xlsx,.xls,.docx,.doc,.png,.jpg,.jpeg">
+
+        <!-- Zona para arrastrar o hacer clic -->
+        <div @click="$refs.inputModalOCDocs.click()"
+             class="zona-adjuntar-archivos border border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-3.5 text-center cursor-pointer transition bg-slate-950/60 hover:bg-slate-950">
+          <i class="fa-solid fa-cloud-arrow-up text-xl text-emerald-400 mb-1 block"></i>
+          <span class="font-bold text-slate-200 block text-xs">Haz clic aquí o arrastra archivos</span>
+          <span class="text-[10px] text-slate-500 block mt-0.5">2 a 4 archivos (.pdf, .xml, .jpg, etc.)</span>
+        </div>
+
+        <!-- Lista de archivos seleccionados -->
+        <div v-if="archivosParaSubirOC.length > 0" class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <span>Archivos ({{ archivosParaSubirOC.length }}):</span>
+            <span :class="archivosParaSubirOC.length >= 2 && archivosParaSubirOC.length <= 4 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'">
+              {{ archivosParaSubirOC.length >= 2 && archivosParaSubirOC.length <= 4 ? 'Listo (2 a 4)' : (archivosParaSubirOC.length < 2 ? 'Mínimo 2' : 'Máximo 4') }}
+            </span>
+          </div>
+
+          <div class="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+            <div v-for="(arch, idx) in archivosParaSubirOC" :key="idx"
+                 class="flex items-center justify-between bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 text-[11px]">
+              <div class="flex items-center gap-1.5 truncate max-w-[240px]">
+                <i class="fa-solid fa-file text-slate-400 text-[10px]"></i>
+                <span class="truncate text-slate-200 font-medium" :title="arch.name">{{ arch.name }}</span>
+                <span class="text-[9px] text-slate-500 font-mono">({{ (arch.size / 1024).toFixed(0) }}KB)</span>
+              </div>
+              <button type="button" @click="quitarArchivoModal(idx)" class="text-rose-400 hover:text-rose-300 p-0.5 cursor-pointer ml-1" title="Quitar">
+                <i class="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer simple con Cancelar y GUARDAR -->
+      <div class="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-800">
+        <button @click="cerrarModalAdjuntarOC" type="button"
+                class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition cursor-pointer">
+          Cancelar
+        </button>
+        <button @click="subirArchivosOCSeleccionada" :disabled="subiendoArchivosOC || archivosParaSubirOC.length < 2 || archivosParaSubirOC.length > 4"
+                class="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+          <i class="fa-solid" :class="subiendoArchivosOC ? 'fa-spinner fa-spin' : 'fa-check text-[10px]'"></i>
+          <span>{{ subiendoArchivosOC ? 'Guardando...' : 'GUARDAR' }}</span>
+        </button>
+      </div>
+
     </div>
 
     <!-- ==================================================== -->
@@ -1902,6 +1630,111 @@
             Confirmar reasignación
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL MENU DE REASIGNACIÓN INDIVIDUAL / CARTERA POR OC -->
+    <div v-if="mostrarModalReasignacion" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-850 p-5 text-slate-100 shadow-2xl">
+        
+        <!-- ENCABEZADO -->
+        <div class="mb-4 flex items-start justify-between border-b border-slate-700 pb-3">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-pen text-amber-400"></i>
+              Reasignación de Cartera
+            </span>
+            <h3 class="mt-1 text-base font-black text-white">
+              Reasignar Orden de Compra
+            </h3>
+            <p v-if="ocReasignarSeleccionada" class="mt-1 text-xs text-slate-400">
+              OC #<strong class="text-white font-mono">{{ ocReasignarSeleccionada.numero_oc }}</strong> · Obra: <strong class="text-slate-200 font-mono">{{ ocReasignarSeleccionada.centro_costos }}</strong>
+              <span v-if="ocReasignarSeleccionada.proveedor" class="block text-slate-400 truncate max-w-sm mt-0.5">{{ ocReasignarSeleccionada.proveedor }}</span>
+            </p>
+          </div>
+          <button type="button" @click="cerrarModalReasignacion" class="text-slate-400 hover:text-white transition p-1" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- FORMULARIO DEL MENÚ: PLAZA, PAGADOS, OCS SIN SEGUIMIENTO, USUARIO -->
+        <div class="space-y-4">
+          
+          <!-- 1. PLAZA -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-amber-400 text-xs"></i>
+              Plaza
+            </label>
+            <select v-model="formReasignacion.plaza"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition cursor-pointer">
+              <option value="ESTA_OC">Solo esta OC (#{{ ocReasignarSeleccionada?.numero_oc }} · {{ ocReasignarSeleccionada?.centro_costos }})</option>
+              <option value="ESTA_OBRA">Toda la Obra ({{ ocReasignarSeleccionada?.centro_costos }})</option>
+              <option value="TODAS">Todas las Plazas</option>
+              <option v-for="plaza in listaPlazas" :key="plaza" :value="plaza">
+                Plaza {{ plaza }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 2. PAGADOS -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-money-bill-wave text-emerald-400 text-xs"></i>
+              Pagados
+            </label>
+            <select v-model="formReasignacion.pagados"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition cursor-pointer">
+              <option value="TODAS">Todas (Pagadas y Pendientes)</option>
+              <option value="SOLO_PAGADOS">Solo Pagados (Liquidada 100%)</option>
+              <option value="PENDIENTES">Solo Pendientes de Pago (Con saldo)</option>
+            </select>
+          </div>
+
+          <!-- 3. OCS QUE NO SE LE HAN DADO SEGUIMIENTO -->
+          <div class="p-3 rounded-xl border border-slate-700 bg-slate-900/70 hover:bg-slate-900 transition">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" v-model="formReasignacion.sinSeguimiento"
+                     class="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-400 cursor-pointer">
+              <div>
+                <span class="text-xs font-bold text-slate-200 block">Ocs que no se le han dado seguimiento</span>
+                <span class="text-[11px] text-slate-400 block mt-0.5">Filtrar órdenes inactivas (&gt;60 días sin movimiento o sin responsable asignado).</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- 4. USUARIO RESPONSABLE -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-user text-indigo-400 text-xs"></i>
+              Usuario a Asignar
+            </label>
+            <select v-model="formReasignacion.usuarioId"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition cursor-pointer">
+              <option value="">-- Selecciona el usuario responsable --</option>
+              <option v-for="user in compradorasDisponibles" :key="user.id" :value="user.id">
+                {{ user.nombre }} (ID: {{ user.id }})
+              </option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- BOTÓN INFERIOR: Usuario Reasignar -->
+        <div class="mt-6 flex items-center justify-between gap-3 border-t border-slate-700 pt-4">
+          <button type="button" @click="cerrarModalReasignacion"
+                  class="rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer">
+            Cancelar
+          </button>
+          
+          <button type="button" @click="ejecutarReasignacionIndividual"
+                  :disabled="!formReasignacion.usuarioId || cargandoReasignacion"
+                  class="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+            <i class="fa-solid" :class="cargandoReasignacion ? 'fa-spinner fa-spin' : 'fa-user-check'"></i>
+            <span>Usuario Reasignar</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </div> <!-- Fin de #app -->
