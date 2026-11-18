@@ -4,6 +4,10 @@ Bienvenido al centro de documentación técnica del sistema **Control y Concilia
 
 ## 📁 Estructura Documental
 
+- **Documentación Ejecutiva y Diagramas de Procesos (Sin Código):**
+  - **[Versión PDF (`docs/DOCUMENTACION_TECNICA_PROCESOS.pdf`)](DOCUMENTACION_TECNICA_PROCESOS.pdf)** *(también disponible en la raíz del proyecto para compartir fácilmente)*
+  - **[Versión Web Interactiva (`docs/DOCUMENTACION_TECNICA_PROCESOS.html`)](DOCUMENTACION_TECNICA_PROCESOS.html)**
+  - **[Fuente Markdown + Mermaid (`docs/DOCUMENTACION_TECNICA_PROCESOS.md`)](DOCUMENTACION_TECNICA_PROCESOS.md)**
 - **[Arquitectura (`docs/architecture/`)](architecture/README.md):**
   - Patrones de diseño (Clean Architecture, Feature Modules).
   - Flujo de datos y ciclo de vida de las solicitudes.

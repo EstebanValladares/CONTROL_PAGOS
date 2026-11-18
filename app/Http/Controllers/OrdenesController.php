@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Process\Process;
 
 class OrdenesController extends Controller
@@ -39,10 +40,11 @@ class OrdenesController extends Controller
 
             return response()->json($resultado);
         } catch (Exception $e) {
+            Log::error('Error al consultar órdenes recientes: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'status' => 'error',
                 'mensaje' => $e->getMessage(),
-                'traceback' => $e->getTraceAsString(),
             ], 500);
         }
     }
@@ -59,19 +61,38 @@ class OrdenesController extends Controller
         }
     }
 
-    public function descargarExcel(Request $request): BinaryFileResponse|JsonResponse
+    public function descargarExcel(Request $request): StreamedResponse|JsonResponse
     {
         try {
+            $tipo = strtolower(trim((string)$request->query('tipo', 'pagos')));
+            $empresa = strtoupper(trim((string)$request->query('empresa', 'ARYVE')));
+
+            if ($tipo === 'ordenes') {
+                $params = [
+                    'empresa' => $empresa,
+                    'temporal' => $request->query('temporal', 'HOY'),
+                    'semana' => $request->query('semana', ''),
+                    'obra' => $request->query('obra', ''),
+                    'busqueda' => $request->query('busqueda', $request->query('q', '')),
+                ];
+
+                return response()->streamDownload(function () use ($params) {
+                    OrdenesService::streamCsvOrdenes($params);
+                }, "ordenes_compra_{$empresa}.csv", [
+                    'Content-Type' => 'text/csv; charset=UTF-8',
+                ]);
+            }
+
             $params = [
-                'empresa' => $request->query('empresa', ''),
+                'empresa' => $empresa,
                 'plaza' => $request->query('plaza', ''),
                 'semana' => $request->query('semana', ''),
                 'responsable' => $request->query('responsable', ''),
             ];
 
-            $ruta = PagosService::generarCsvConciliado($params);
-
-            return response()->download($ruta, 'concentrado_oc_conciliado.csv', [
+            return response()->streamDownload(function () use ($params) {
+                PagosService::streamCsvConciliado($params);
+            }, 'concentrado_oc_conciliado.csv', [
                 'Content-Type' => 'text/csv; charset=UTF-8',
             ]);
         } catch (Exception $e) {

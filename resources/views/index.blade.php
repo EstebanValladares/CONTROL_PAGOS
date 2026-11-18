@@ -158,12 +158,14 @@
             <span>Salir</span>
           </button>
 
-          <!-- BOTONES DE ACCIÓN EXCEL -->
-          <a v-if="puedeVerConcentrado"
-             :href="baseUrl + '/api/descargar-excel?empresa=' + encodeURIComponent(empresaActiva) + '&plaza=' + encodeURIComponent(filtroPlaza) + '&semana=' + encodeURIComponent(filtroSemana) + '&responsable=' + encodeURIComponent(filtroResponsable)" 
-             class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
-            <i class="fa-solid fa-file-excel"></i>
-            <span>Exportar Excel</span>
+          <!-- BOTÓN DE ACCIÓN EXCEL (VISTA CONCILIACIÓN O VISTA OCS) -->
+          <a :href="vistaActiva === 'ORDENES_VIVO' 
+                     ? (baseUrl + '/api/descargar-excel?tipo=ordenes&empresa=' + encodeURIComponent(empresaActiva) + '&temporal=' + encodeURIComponent(filtroVivoTemporal) + '&semana=' + encodeURIComponent(filtroVivoSemana) + '&obra=' + encodeURIComponent(filtroVivoObra) + '&busqueda=' + encodeURIComponent(filtroVivoBusqueda))
+                     : (baseUrl + '/api/descargar-excel?tipo=pagos&empresa=' + encodeURIComponent(empresaActiva) + '&plaza=' + encodeURIComponent(filtroPlaza) + '&semana=' + encodeURIComponent(filtroSemana) + '&responsable=' + encodeURIComponent(filtroResponsable))" 
+             class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+             :title="vistaActiva === 'ORDENES_VIVO' ? 'Descargar órdenes de compra filtradas en Excel (CSV UTF-8)' : 'Descargar concentrado de pagos en Excel (CSV UTF-8)'">
+            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+            <span>{{ vistaActiva === 'ORDENES_VIVO' ? 'Exportar OCs' : 'Exportar Excel' }}</span>
           </a>
 
           <button v-if="puedeVerConcentrado && vistaActiva === 'CONCILIACION'"
@@ -382,16 +384,8 @@
               </td>
 
               <!-- RUBRO (MO, MAT, SUB) -->
-              <td class="py-2 px-3">
-                <span class="px-2 py-0.5 rounded text-[11px] font-bold"
-                      :class="{
-                        'bg-amber-500/10 text-amber-400 border border-amber-500/30': item.RUBRO === 'MANO DE OBRA' || item.RUBRO === 'MO',
-                        'bg-blue-500/10 text-blue-400 border border-blue-500/30': item.RUBRO.includes('CONCRETO') || item.RUBRO.includes('MAT'),
-                        'bg-purple-500/10 text-purple-400 border border-purple-500/30': item.RUBRO.includes('SUB'),
-                        'bg-slate-700 text-slate-300': !item.RUBRO.includes('MANO') && !item.RUBRO.includes('MAT') && !item.RUBRO.includes('SUB')
-                      }">
-                  {{ item.RUBRO }}
-                </span>
+              <td class="py-2 px-3 text-slate-300 text-xs font-medium">
+                {{ item.RUBRO }}
               </td>
 
               <!-- IMPORTE TOTAL -->
@@ -488,14 +482,14 @@
         
         <!-- Tarjeta Izquierda: ÓRDENES HOY (Compacta y Clickeable para filtrar) -->
         <div @click="filtroVivoTemporal = 'HOY'; cargarOrdenesVivo(1)"
-             class="lg:col-span-4 bg-slate-800/90 border border-slate-700/80 hover:border-emerald-500/60 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between cursor-pointer transition group"
+             class="lg:col-span-4 bg-slate-800/90 border border-slate-700/80 hover:border-slate-500/60 px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between cursor-pointer transition group"
              title="Clic para ver sólo las órdenes del día de hoy; este contador no es el total de OCs activas">
           <div>
             <div class="flex items-center gap-2 mb-0.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 group-hover:text-emerald-300">
-                <i class="fa-regular fa-calendar-check text-xs"></i> ÓRDENES HOY
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 group-hover:text-white">
+                <i class="fa-regular fa-calendar-check text-xs text-slate-400 group-hover:text-white"></i> ÓRDENES HOY
               </span>
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
             </div>
             <div class="flex items-baseline gap-2">
               <span class="text-2xl font-black text-white leading-tight">{{ kpisVivo.ordenes_hoy }}</span>
@@ -504,7 +498,7 @@
           </div>
           <div class="text-right">
             <span class="text-[10px] text-slate-400 block uppercase font-semibold">Monto total de órdenes hoy</span>
-            <p class="text-xl font-black text-emerald-300 font-mono leading-tight">${{ formatearNumero(kpisVivo.monto_hoy) }}</p>
+            <p class="text-xl font-black text-white font-mono leading-tight">${{ formatearNumero(kpisVivo.monto_hoy) }}</p>
           </div>
         </div>
 
@@ -541,7 +535,7 @@
             <button type="button" @click="filtroVivoTemporal = 'HOY'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
                     class="px-2 py-1.5 rounded-md text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
                     :class="filtroVivoTemporal === 'HOY' && !filtroSemaforoAntiguedad ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
-              <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-emerald-400' : 'bg-slate-400'"></span>
+              <span class="w-1.5 h-1.5 rounded-full" :class="filtroVivoTemporal === 'HOY' ? 'bg-slate-300' : 'bg-slate-400'"></span>
               <span>Sólo Hoy ({{ kpisVivo.ordenes_hoy }})</span>
             </button>
             <button type="button" @click="filtroVivoTemporal = 'SEMANA'; filtroSemaforoAntiguedad = ''; cargarOrdenesVivo(1)"
@@ -933,7 +927,7 @@
                           <div class="flex items-center gap-2.5">
                             <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold flex items-center justify-center">{{ idx + 1 }}</span>
                             <span class="font-mono font-bold text-emerald-300">${{ formatearNumero(prog.monto_programado) }}</span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-300">{{ prog.rubro }}</span>
+                            <span class="text-[10px] font-semibold text-slate-400 font-mono">{{ prog.rubro }}</span>
                             <span class="text-[10px] font-mono text-cyan-300">{{ prog.semana }}</span>
                             <span class="text-slate-300 text-[11px]">{{ prog.concepto || 'Sin concepto' }}</span>
                           </div>
@@ -958,14 +952,14 @@
       <div class="mx-2 sm:mx-5 mt-6 bg-slate-800/90 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden mb-8 transition-all">
         
         <!-- Banner superior estilo ERP: TOTAL PAGADO -->
-        <div class="banner-segunda-tabla bg-gradient-to-r from-slate-900 via-emerald-950/40 to-slate-900 p-4 border-b border-emerald-500/30 flex items-center justify-between flex-wrap gap-4">
+        <div class="banner-segunda-tabla bg-slate-900 p-4 border-b border-slate-700/80 flex items-center justify-between flex-wrap gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shadow-inner icono-guardado">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-bold text-lg shadow-inner icono-guardado">
               <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-black tracking-widest uppercase px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 badge-guardado">
+                <span class="text-xs font-black tracking-widest uppercase px-2.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 badge-guardado">
                   GUARDADO
                 </span>
                 <span class="text-xs text-slate-400 font-bold uppercase tracking-wider badge-semana">
@@ -975,7 +969,7 @@
               <h3 class="text-base font-black text-white uppercase tracking-tight mt-0.5 titulo-total-pagado flex items-center flex-wrap gap-1.5">
                 <span>TOTAL EN GUARDADO:</span>
                 <span v-if="filtroVivoObra" class="text-xs font-bold text-amber-400 font-mono px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">OBRA {{ filtroVivoObra }}</span>
-                <span class="text-emerald-300 font-mono text-xl ml-1 drop-shadow font-extrabold monto-total-pagado">${{ formatearNumero(totalMontoProgramadoSemana) }}</span>
+                <span class="text-white font-mono text-xl ml-1 font-extrabold monto-total-pagado">${{ formatearNumero(totalMontoProgramadoSemana) }}</span>
               </h3>
             </div>
           </div>
@@ -1054,7 +1048,7 @@
                     PENDIENTE DE ENVÍO
                   </span>
                 </td>
-                <td class="monto-programacion-guardada py-2 px-3 text-right font-mono font-extrabold text-emerald-200 drop-shadow-[0_0_4px_rgba(16,185,129,0.35)]">
+                <td class="monto-programacion-guardada py-2 px-3 text-right font-mono font-extrabold text-white">
                   ${{ formatearNumero(prog.monto_programado) }}
                 </td>
                 <td class="py-2 px-3 text-center whitespace-nowrap">
@@ -1089,7 +1083,7 @@
                   </button>
                   <button v-if="prog.es_pendiente" type="button" @click="enviarPagoPendiente(prog)"
                           :disabled="enviandoPendienteId !== null"
-                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-600/20 text-emerald-300 transition hover:bg-emerald-600 hover:text-white disabled:cursor-wait disabled:opacity-50 cursor-pointer shadow-sm"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:cursor-wait disabled:opacity-50 cursor-pointer shadow-sm"
                           title="Enviar y guardar este pago en la base de datos"
                           aria-label="Enviar y guardar pago">
                     <i class="fa-solid" :class="enviandoPendienteId === prog.id ? 'fa-spinner fa-spin' : 'fa-paper-plane'" aria-hidden="true"></i>
@@ -1104,11 +1098,11 @@
         <!-- Footer Totalizador Inferior -->
         <div class="p-3 bg-slate-900 border-t border-slate-700/80 flex items-center justify-between text-xs text-slate-400">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
             <span>Total programado activo reflejado</span>
           </div>
           <div class="font-bold text-slate-300">
-            TOTAL PROGRAMADO: <span class="font-mono text-emerald-400 text-sm font-extrabold ml-1">${{ formatearNumero(totalMontoProgramadoSemana) }}</span>
+            TOTAL PROGRAMADO: <span class="font-mono text-white text-sm font-extrabold ml-1">${{ formatearNumero(totalMontoProgramadoSemana) }}</span>
           </div>
         </div>
 

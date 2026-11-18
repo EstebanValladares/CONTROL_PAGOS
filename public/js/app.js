@@ -1069,6 +1069,7 @@ async cargarProgramacionesSemana(silencioso = false) {
 
             const res = await fetch('/api/ordenes-recientes?' + params.toString());
             const data = await res.json();
+            if (this.verificarRespuestaSesion(res, data)) return;
             if (!res.ok || data.status !== 'ok') {
               throw new Error(data.mensaje || 'No se pudieron cargar las órdenes recientes.');
             }
@@ -1150,6 +1151,7 @@ async cargarProgramacionesSemana(silencioso = false) {
             });
             const res = await fetch('/api/ordenes/seguimiento?' + params.toString());
             const data = await res.json();
+            if (this.verificarRespuestaSesion(res, data)) return;
             if (!res.ok || data.status !== 'ok') {
               throw new Error(data.mensaje || 'No se pudo cargar el monitor de seguimiento.');
             }
@@ -1453,6 +1455,15 @@ async cargarProgramacionesSemana(silencioso = false) {
           this.archivosPendientesPorOC = {};
           this.documentosTemporalesPorProgramacion = {};
         },
+        verificarRespuestaSesion(res, data) {
+          if (res && res.status === 401 && this.usuarioActivo) {
+            const msg = (data && data.mensaje) ? data.mensaje : 'Tu sesión ha expirado. Por favor ingresa nuevamente.';
+            this.cerrarSesion();
+            this.errorLogin = msg;
+            return true;
+          }
+          return false;
+        },
         limpiarTipo(val) {
           if (!val) return 'MATERIALES';
           return String(val).replace(/^(\(\d+\)|\d+)\s*/, '').trim();
@@ -1514,6 +1525,7 @@ async cargarProgramacionesSemana(silencioso = false) {
 
             const res = await fetch('/api/pagos?' + params.toString());
             const data = await res.json();
+            if (this.verificarRespuestaSesion(res, data)) return;
             if (data.status === 'ok') {
               this.registros = data.datos;
               this.totalPaginas = data.total_paginas;

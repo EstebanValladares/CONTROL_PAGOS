@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentación Técnica y Diagramas de Procesos — CONTROL_PAGOS_OC</title>
+  <style>
+    @page {
+      size: letter portrait;
+      margin: 14mm 13mm 15mm 13mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+      color: #1e293b;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .doc-container {
+      max-width: 980px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      padding: 36px 40px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+        font-size: 11.5px;
+      }
+      .doc-container {
+        max-width: 100%;
+        box-shadow: none;
+        padding: 0;
+        border-radius: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+
+    /* Cover / Header Banner */
+    .doc-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #312e81 100%);
+      color: #ffffff;
+      padding: 26px 28px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      border-left: 6px solid #f59e0b;
+    }
+    .doc-kicker {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: #fbbf24;
+      margin-bottom: 6px;
+    }
+    .doc-header h1 {
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+    }
+    .doc-subtitle {
+      margin: 0 0 14px 0;
+      font-size: 12.5px;
+      color: #cbd5e1;
+    }
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .meta-pill {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    /* Typography */
+    h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 26px 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    .sec-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 16px 0 8px 0;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    p {
+      margin: 0 0 10px 0;
+      color: #334155;
+    }
+    ul, ol {
+      margin: 6px 0 12px 0;
+      padding-left: 20px;
+      color: #334155;
+    }
+    li {
+      margin-bottom: 5px;
+    }
+
+    code {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11px;
+      color: #0f172a;
+    }
+
+    /* Callouts */
+    .callout {
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin: 12px 0;
+      border-left: 4px solid #4f46e5;
+      background: #eef2ff;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .callout.amber {
+      border-left-color: #d97706;
+      background: #fffbeb;
+    }
+    .callout.emerald {
+      border-left-color: #059669;
+      background: #ecfdf5;
+    }
+    .callout-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+
+    /* Diagram Card */
+    .diagram-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 12px 14px;
+      margin: 14px 0 18px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .diagram-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #475569;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .diagram-title span.tag {
+      background: #e2e8f0;
+      color: #334155;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 9.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .diagram-card svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px 0;
+      font-size: 10.5px;
+      break-inside: auto;
+    }
+    thead {
+      display: table-header-group;
+    }
+    tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    th {
+      background: #0f172a;
+      color: #ffffff;
+      text-align: left;
+      padding: 6px 8px;
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    td {
+      padding: 4.5px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+      color: #334155;
+      line-height: 1.35;
+    }
+    tbody tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: Consolas, monospace;
+    }
+    .b-get { background: #dcfce7; color: #166534; }
+    .b-post { background: #dbeafe; color: #1e40af; }
+
+    /* KPI / Semaphore grid */
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 10px 0 14px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .sem-card {
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      text-align: center;
+    }
+    .sem-card strong {
+      display: block;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+    .sem-card span {
+      font-size: 10px;
+      color: #475569;
+    }
+    .sem-verde { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+    .sem-amarillo { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+    .sem-naranja { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+    .sem-rojo { background: #fff1f2; border-color: #fda4af; color: #9f1239; }
+    .sem-gris { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+
+    .toc-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      break-inside: avoid;
+    }
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 20px;
+      font-size: 12px;
+    }
+    .toc-grid a {
+      color: #334155;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-note {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #cbd5e1;
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-container">
+
+    <!-- ENCABEZADO EJECUTIVO -->
+    <header class="doc-header">
+      <div class="doc-kicker">Documentación Técnica y Operativa de Procesos · Grupo Velas &amp; Construcciones Aryve</div>
+      <h1>Control y Conciliación de Pagos y Órdenes de Compra (CONTROL_PAGOS_OC)</h1>
+      <p class="doc-subtitle">
+        Arquitectura del sistema, flujos de sincronización con Enkontrol EK9, monitor de seguimiento y cartera sin responsable, reglas del expediente digital CFDI, programación hacia BI y publicación blindada con Torre de Control.
+      </p>
+      <div class="meta-pills">
+        <span class="meta-pill">Backend: Laravel 13 / PHP 8</span>
+        <span class="meta-pill">Frontend: Vue 3 SPA + Tailwind</span>
+        <span class="meta-pill">Puerto Local: 127.0.0.1:8050</span>
+        <span class="meta-pill">BD Local: SQLite (ecosistema_oc.db)</span>
+        <span class="meta-pill">ERP: Enkontrol EK9 (Sybase) + BI (SQL Server)</span>
+      </div>
+    </header>
+
+    <!-- INDICE -->
+    <section class="toc-box">
+      <div class="callout-title" style="color:#475569; margin-bottom:6px;">Contenido del Documento</div>
+      <div class="toc-grid">
+        <a href="#sec1">1. Resumen Ejecutivo y Arquitectura General</a>
+        <a href="#sec5">5. Programación de Pagos a BI y Conciliación</a>
+        <a href="#sec2">2. Sincronización Híbrida (Enkontrol EK9 ↔ SQLite)</a>
+        <a href="#sec6">6. Telemetría, Espejo de BD y Publicación Blindada</a>
+        <a href="#sec3">3. Monitor de Seguimiento de OCs y Cartera</a>
+        <a href="#sec7">7. Modelo de Datos y Diccionario de Tablas</a>
+        <a href="#sec4">4. Operación Diaria, Semáforo y Expediente Digital</a>
+        <a href="#sec8">8. Catálogo Consolidado de Endpoints API</a>
+      </div>
+    </section>
+
+    <!-- SECCION 1 -->
+    <section id="sec1">
+      <h2><span class="sec-num">1</span> Resumen Ejecutivo y Arquitectura General</h2>
+      <p>
+        <strong>CONTROL_PAGOS_OC</strong> centraliza la operación financiera y de compras sobre Órdenes de Compra (OC) emitidas en Enkontrol EK9 para <strong>Construcciones Aryve</strong> (<code>EK_ADM01_11</code>) y <strong>Grupo Velas</strong> (<code>EK_ADM14_11</code>). Permite consultar pasivos por antigüedad, adjuntar facturas XML/PDF con validación automática contra el monto a pagar, programar pagos hacia el servidor de Inteligencia de Negocios (<code>SQL Server Aryve2</code>), dar seguimiento a OCs sin movimiento y conciliar pagos semanales.
+      </p>
+      <p>
+        La aplicación se ejecuta localmente mediante <code>iniciar_sistema.bat</code> en el puerto <code>8050</code>. Usa una base de datos <strong>SQLite</strong> activa en <code>database/ecosistema_oc.db</code> con un mecanismo automático de respaldo/espejo hacia <code>datos/ecosistema_oc.db</code> para que el equipo pueda trabajar incluso fuera de la red de oficina (<strong>Modo Casa / Local</strong>).
+      </p>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 1 · Arquitectura General del Ecosistema</span>
+          <span class="tag">Vista de Componentes</span>
+        </div>
+        <svg viewBox="0 0 920 350" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+            </marker>
+            <marker id="arr1-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+            </marker>
+            <marker id="arr1-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706"/>
+            </marker>
+          </defs>
+
+          <!-- Zone Backgrounds -->
+          <rect x="12" y="14" width="205" height="322" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="4 3"/>
+          <text x="114" y="33" text-anchor="middle" font-size="10.5" font-weight="800" fill="#475569">FUENTES EXTERNAS / RED</text>
+
+          <rect x="238" y="14" width="210" height="322" rx="8" fill="#eef2ff" stroke="#a5b4fc" stroke-dasharray="4 3"/>
+          <text x="343" y="33" text-anchor="middle" font-size="10.5" font-weight="800" fill="#3730a3">SINCRONIZACIÓN Y BD LOCAL</text>
+
+          <rect x="469" y="14" width="215" height="322" rx="8" fill="#ecfdf5" stroke="#6ee7b7" stroke-dasharray="4 3"/>
+          <text x="576" y="33" text-anchor="middle" font-size="10.5" font-weight="800" fill="#065f46">BACKEND LARAVEL 13 (:8050)</text>
+
+          <rect x="705" y="14" width="203" height="322" rx="8" fill="#fffbeb" stroke="#fcd34d" stroke-dasharray="4 3"/>
+          <text x="806" y="33" text-anchor="middle" font-size="10.5" font-weight="800" fill="#92400e">INTERFAZ Y TORRE EK10</text>
+
+          <!-- Column 1 Nodes -->
+          <rect x="24" y="48" width="181" height="52" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+          <text x="114" y="69" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">Enkontrol ARYVE (EK9)</text>
+          <text x="114" y="85" text-anchor="middle" font-size="9.5" fill="#475569">Sybase EK_ADM01_11 (:2544)</text>
+
+          <rect x="24" y="114" width="181" height="52" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+          <text x="114" y="135" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">Enkontrol VELAS (EK9)</text>
+          <text x="114" y="151" text-anchor="middle" font-size="9.5" fill="#475569">Sybase EK_ADM14_11 (:2546)</text>
+
+          <rect x="24" y="196" width="181" height="58" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="114" y="218" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">SQL Server BI (Aryve2)</text>
+          <text x="114" y="234" text-anchor="middle" font-size="9.5" fill="#1d4ed8">dbo._pagos_programados (ODBC)</text>
+
+          <rect x="24" y="268" width="181" height="52" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+          <text x="114" y="289" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">Repositorio Documental</text>
+          <text x="114" y="305" text-anchor="middle" font-size="9.5" fill="#475569">WebEk10 Local / FTP Opcional</text>
+
+          <!-- Column 2 Nodes -->
+          <rect x="251" y="54" width="184" height="62" rx="6" fill="#ffffff" stroke="#4f46e5" stroke-width="1.5"/>
+          <text x="343" y="74" text-anchor="middle" font-size="10.5" font-weight="700" fill="#312e81">sincronizar_ordenes_ek9.py</text>
+          <text x="343" y="90" text-anchor="middle" font-size="9.5" fill="#475569">Extracción pyodbc + Clasificador</text>
+          <text x="343" y="104" text-anchor="middle" font-size="9" fill="#6366f1">(Modo Casa si no hay red)</text>
+
+          <rect x="251" y="138" width="184" height="58" rx="6" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+          <text x="343" y="160" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a">SQLite Activa (B-Tree)</text>
+          <text x="343" y="177" text-anchor="middle" font-size="9.5" fill="#334155">database/ecosistema_oc.db</text>
+
+          <rect x="251" y="212" width="184" height="48" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+          <text x="343" y="232" text-anchor="middle" font-size="10.5" font-weight="700" fill="#0f172a">Espejo Git Portable</text>
+          <text x="343" y="248" text-anchor="middle" font-size="9.5" fill="#475569">datos/ecosistema_oc.db</text>
+
+          <rect x="251" y="274" width="184" height="48" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+          <text x="343" y="294" text-anchor="middle" font-size="10.5" font-weight="700" fill="#0f172a">Archivos + Laravel Cache</text>
+          <text x="343" y="310" text-anchor="middle" font-size="9.5" fill="#475569">documentos_ejemplo/ + Cache 300s</text>
+
+          <!-- Column 3 Nodes -->
+          <rect x="482" y="54" width="189" height="52" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+          <text x="576" y="74" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Rutas REST (routes/web.php)</text>
+          <text x="576" y="90" text-anchor="middle" font-size="9.5" fill="#475569">Controladores Auth, OC, Pagos, Seg.</text>
+
+          <rect x="482" y="124" width="189" height="72" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+          <text x="576" y="144" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Servicios de Dominio</text>
+          <text x="576" y="160" text-anchor="middle" font-size="9" fill="#334155">OrdenesService · SeguimientoService</text>
+          <text x="576" y="173" text-anchor="middle" font-size="9" fill="#334155">PagosService · DocumentService</text>
+          <text x="576" y="186" text-anchor="middle" font-size="9" fill="#334155">BIService · MetricasService</text>
+
+          <rect x="482" y="216" width="189" height="58" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+          <text x="576" y="237" text-anchor="middle" font-size="10.5" font-weight="700" fill="#064e3b">AppServiceProvider</text>
+          <text x="576" y="253" text-anchor="middle" font-size="9" fill="#047857">boot() restaura DB si es más nueva</text>
+          <text x="576" y="266" text-anchor="middle" font-size="9" fill="#047857">terminating() espejea escrituras</text>
+
+          <!-- Column 4 Nodes -->
+          <rect x="717" y="54" width="179" height="62" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+          <text x="806" y="75" text-anchor="middle" font-size="11" font-weight="700" fill="#78350f">SPA Vue 3 + Tailwind CSS</text>
+          <text x="806" y="91" text-anchor="middle" font-size="9.5" fill="#475569">Vistas: Órdenes, Conciliación</text>
+          <text x="806" y="105" text-anchor="middle" font-size="9.5" fill="#475569">y Modales de Reasignación</text>
+
+          <rect x="717" y="138" width="179" height="64" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+          <text x="806" y="159" text-anchor="middle" font-size="11" font-weight="700" fill="#78350f">Torre de Control EK10</text>
+          <text x="806" y="175" text-anchor="middle" font-size="9.5" fill="#475569">Puerto 8000 · Sondeo cada 4s</text>
+          <text x="806" y="189" text-anchor="middle" font-size="9" fill="#b45309">Demonio Sync OC cada 60s</text>
+
+          <rect x="717" y="222" width="179" height="62" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="806" y="242" text-anchor="middle" font-size="10.5" font-weight="700" fill="#78350f">Publicador Blindado</text>
+          <text x="806" y="257" text-anchor="middle" font-size="9.5" fill="#475569">publisher_oc.py (sin .env/BD)</text>
+          <text x="806" y="271" text-anchor="middle" font-size="9.5" fill="#b45309">GitHub → CONTROL_PAGOS</text>
+
+          <!-- Arrows -->
+          <line x1="205" y1="74" x2="250" y2="80" stroke="#475569" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <line x1="205" y1="140" x2="250" y2="95" stroke="#475569" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <line x1="343" y1="116" x2="343" y2="136" stroke="#475569" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <line x1="343" y1="196" x2="343" y2="210" stroke="#475569" stroke-width="1.3" marker-end="url(#arr1)"/>
+
+          <!-- Backend to DB & BI & WebEk10 -->
+          <line x1="482" y1="167" x2="437" y2="167" stroke="#475569" stroke-width="1.6" marker-end="url(#arr1)" marker-start="url(#arr1)"/>
+          <line x1="482" y1="245" x2="437" y2="236" stroke="#059669" stroke-width="1.5" marker-end="url(#arr1)" marker-start="url(#arr1)"/>
+          <line x1="482" y1="185" x2="437" y2="292" stroke="#475569" stroke-width="1.3" marker-end="url(#arr1)"/>
+
+          <!-- Backend to BI & Docs -->
+          <path d="M 482 150 L 455 150 L 455 328 L 222 328 L 222 225 L 207 225" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr1-blue)"/>
+          <path d="M 482 178 L 460 178 L 460 332 L 214 332 L 214 294 L 207 294" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#arr1)"/>
+
+          <!-- Backend & Clients -->
+          <line x1="576" y1="106" x2="576" y2="122" stroke="#059669" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <line x1="717" y1="84" x2="673" y2="80" stroke="#d97706" stroke-width="1.6" marker-end="url(#arr1-amber)" marker-start="url(#arr1-amber)"/>
+          <path d="M 717 166 L 690 166 L 690 88 L 673 88" fill="none" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr1-amber)"/>
+          <line x1="806" y1="202" x2="806" y2="220" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr1-amber)"/>
+          <path d="M 717 152 L 692 152 L 692 42 L 343 42 L 343 52" fill="none" stroke="#6366f1" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 2 -->
+    <section id="sec2">
+      <h2><span class="sec-num">2</span> Proceso de Sincronización Híbrida (Enkontrol EK9 ↔ SQLite)</h2>
+      <p>
+        La actualización desde Enkontrol está diseñada para ejecutarse tanto <strong>en red de oficina</strong> como <strong>fuera de línea (Modo Casa)</strong>, protegiendo al servidor Sybase contra peticiones repetitivas.
+      </p>
+      <ul>
+        <li><strong>Candado de Enfriamiento (45 seg):</strong> <code>POST /api/ordenes/sincronizar</code> revisa la clave <code>enkontrol_sync_cooldown</code> en caché (TTL 60s). Si pasaron menos de 45s desde la última ejecución, responde de inmediato con los datos locales (<code>omitido: true</code>).</li>
+        <li><strong>Detección Rápida de Red (1.5 seg):</strong> <code>sincronizar_ordenes_ek9.py</code> prueba una conexión TCP al puerto <code>2544</code> de <code>10.10.202.244</code>. Si no responde (o falta <code>pyodbc</code>), activa automáticamente el <strong>Modo Local / Casa</strong> manteniendo intacta la base local sin marcar error.</li>
+        <li><strong>Extracción Dual y Clasificación Automática:</strong> Consulta las partidas de insumos (<code>QUERY_DET_TEMPLATE</code>) para asignar el tipo (<code>(1) MATERIALES</code>, <code>(2) MANO DE OBRA</code>, <code>(4) SUB CONTRATOS</code>, etc.) y rubro sugerido, y las cabeceras (<code>QUERY_OC_TEMPLATE</code>) calculando el importe neto libre de retenciones.</li>
+        <li><strong>UPSERT y Espejo Automático:</strong> Actualiza o inserta usando la llave <code>(empresa, centro_costos, numero_oc)</code> y, si la base activa supera 1 MB, la replica automáticamente a <code>datos/ecosistema_oc.db</code>.</li>
+      </ul>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 2 · Flujo de Decisión en Sincronización Enkontrol</span>
+          <span class="tag">Anti-Saturación y Fallback</span>
+        </div>
+        <svg viewBox="0 0 920 265" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+            </marker>
+          </defs>
+
+          <!-- Step 1 -->
+          <rect x="18" y="42" width="140" height="58" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+          <text x="88" y="64" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1e1b4b">Disparo de Sync</text>
+          <text x="88" y="80" text-anchor="middle" font-size="9" fill="#4338ca">Botón UI o Demonio 60s</text>
+
+          <!-- Decision 1 -->
+          <polygon points="250,25 322,71 250,117 178,71" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="250" y="67" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">¿Último Sync</text>
+          <text x="250" y="80" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">&lt; 45 seg?</text>
+
+          <!-- Branch Cooldown Hit -->
+          <rect x="182" y="168" width="136" height="54" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+          <text x="250" y="190" text-anchor="middle" font-size="10" font-weight="700" fill="#065f46">HTTP 200 (Omitido)</text>
+          <text x="250" y="206" text-anchor="middle" font-size="9" fill="#047857">Protege Sybase · Usa SQLite</text>
+
+          <!-- Decision 2 -->
+          <polygon points="445,25 525,71 445,117 365,71" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="445" y="67" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">¿Red Oficina</text>
+          <text x="445" y="80" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">10.10.202.244?</text>
+
+          <!-- Branch Modo Casa -->
+          <rect x="366" y="168" width="158" height="54" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="445" y="190" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">Modo Casa / Local</text>
+          <text x="445" y="206" text-anchor="middle" font-size="9" fill="#475569">Opera con ecosistema_oc.db</text>
+
+          <!-- Online Extract -->
+          <rect x="570" y="34" width="160" height="74" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="650" y="55" text-anchor="middle" font-size="10" font-weight="700" fill="#1e3a8a">Consulta Sybase EK9</text>
+          <text x="650" y="71" text-anchor="middle" font-size="9" fill="#1d4ed8">ARYVE + VELAS (--dias=5)</text>
+          <text x="650" y="85" text-anchor="middle" font-size="8.8" fill="#334155">Calcula Neto y Tipo/Rubro</text>
+
+          <!-- Upsert & Mirror -->
+          <rect x="756" y="34" width="146" height="74" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+          <text x="829" y="55" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">UPSERT + Espejo</text>
+          <text x="829" y="71" text-anchor="middle" font-size="9" fill="#047857">ordenes_compra_ek9</text>
+          <text x="829" y="86" text-anchor="middle" font-size="8.8" fill="#334155">Copia a datos/ecosistema_oc.db</text>
+
+          <!-- Connectors -->
+          <line x1="158" y1="71" x2="176" y2="71" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <line x1="250" y1="117" x2="250" y2="166" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="260" y="145" font-size="9.5" font-weight="700" fill="#059669">SÍ</text>
+
+          <line x1="322" y1="71" x2="363" y2="71" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="336" y="63" font-size="9.5" font-weight="700" fill="#b45309">NO</text>
+
+          <line x1="445" y1="117" x2="445" y2="166" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="455" y="145" font-size="9.5" font-weight="700" fill="#64748b">NO (1.5s)</text>
+
+          <line x1="525" y1="71" x2="568" y2="71" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="537" y="63" font-size="9.5" font-weight="700" fill="#2563eb">SÍ</text>
+
+          <line x1="730" y1="71" x2="754" y2="71" stroke="#334155" stroke-width="1.5" marker-end="url(#arr2)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 3 -->
+    <section id="sec3" class="page-break">
+      <h2><span class="sec-num">3</span> Monitor de Seguimiento de OCs y Reasignación de Cartera</h2>
+      <p>
+        Gestionado por <code>OrdenSeguimientoController</code> y <code>OrdenSeguimientoService</code> sobre las tablas <code>oc_seguimientos</code> y <code>oc_movimientos</code>, su misión es <strong>que ninguna OC quede sin responsable ni olvidada en el limbo</strong>, sin modificar las tablas de origen de Enkontrol.
+      </p>
+
+      <div class="callout amber">
+        <div class="callout-title">Reglas de Oro del Contador de Inactividad</div>
+        <ul>
+          <li><strong>Inicio del Monitor:</strong> Todas las OCs activas (<code>estatus != 'C'</code>) se registran automáticamente con estado <code>ABIERTA</code> al consultarse el monitor. No se inventa historial previo no observado.</li>
+          <li><strong>La Reasignación NO reinicia la inactividad:</strong> El cálculo SQL de <code>dias_sin_movimiento</code> ignora los registros de <code>oc_movimientos</code> con tipo <code>REASIGNACION</code>. Sólo las notas, cambios de estado o movimientos de pago actualizan la última actividad.</li>
+          <li><strong>Alerta de Limbo (&gt; 60 días):</strong> Una OC entra en estado de atención crítica (<code>en_limbo = 1</code>) cuando supera estrictamente <strong>60 días</strong> sin actividad real y no está en estado <code>CERRADA</code> ni <code>CANCELADA</code>.</li>
+          <li><strong>Permisos y Alcances de Reasignación:</strong> Acceso administrativo (<code>rol = 'ADMIN'</code> o ID <code>3399</code> funcional). Desde el botón <strong>REASIGNAR</strong> en tabla o por API se pueden reasignar carteras puntuales (<code>ESTA_OC</code>), toda una obra (<code>ESTA_OBRA</code>) o todas las obras de una Plaza (<code>ZONA</code>) hacia compradoras activas (<code>estatus != 'B'</code>).</li>
+        </ul>
+      </div>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 3 · Flujo de Seguimiento y Reasignación de Cartera</span>
+          <span class="tag">Trazabilidad e Inactividad</span>
+        </div>
+        <svg viewBox="0 0 920 305" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+            </marker>
+          </defs>
+
+          <!-- Auth -->
+          <polygon points="105,112 185,152 105,192 25,152" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="105" y="148" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">¿Sesión ADMIN</text>
+          <text x="105" y="161" text-anchor="middle" font-size="9.5" font-weight="700" fill="#78350f">o ID 3399?</text>
+
+          <rect x="38" y="232" width="134" height="44" rx="6" fill="#fff1f2" stroke="#e11d48" stroke-width="1.5"/>
+          <text x="105" y="251" text-anchor="middle" font-size="10" font-weight="700" fill="#9f1239">HTTP 401 / 403</text>
+          <text x="105" y="266" text-anchor="middle" font-size="9" fill="#be123c">Acceso Denegado</text>
+
+          <!-- Operation Switch -->
+          <rect x="220" y="128" width="128" height="48" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+          <text x="284" y="149" text-anchor="middle" font-size="10" font-weight="700" fill="#1e1b4b">Acción Solicitada</text>
+          <text x="284" y="164" text-anchor="middle" font-size="8.8" fill="#4338ca">/api/ordenes/seguimiento</text>
+
+          <!-- Track 1: Consultar -->
+          <rect x="396" y="22" width="230" height="58" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+          <text x="511" y="42" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">1. Inicializar OCs Activas (estatus != C)</text>
+          <text x="511" y="57" text-anchor="middle" font-size="8.8" fill="#334155">Cruzar MAX(creado_en) donde tipo != REASIGNACION</text>
+          <text x="511" y="70" text-anchor="middle" font-size="8.8" fill="#b91c1c">Detectar Limbo (&gt; 60d) y Sin Responsable</text>
+
+          <rect x="666" y="22" width="234" height="58" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+          <text x="783" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">Listado + Indicadores Resumen</text>
+          <text x="783" y="60" text-anchor="middle" font-size="9" fill="#047857">Filtros: Todas | Limbo &gt;60d | Sin Responsable</text>
+
+          <!-- Track 2: Nota / Estado / Pago -->
+          <rect x="396" y="116" width="230" height="58" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="511" y="137" text-anchor="middle" font-size="10" font-weight="700" fill="#1e3a8a">2. Registrar Nota / Estado / Pago</text>
+          <text x="511" y="152" text-anchor="middle" font-size="8.8" fill="#1d4ed8">Valida OC no cancelada en Enkontrol</text>
+          <text x="511" y="166" text-anchor="middle" font-size="8.8" fill="#334155">Guarda evento en oc_movimientos</text>
+
+          <rect x="666" y="116" width="234" height="58" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="783" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#14532d">REINICIA Contador Inactividad</text>
+          <text x="783" y="156" text-anchor="middle" font-size="9" fill="#166534">Actualiza ultimo_movimiento_en = ahora</text>
+
+          <!-- Track 3: Reasignar Cartera -->
+          <rect x="396" y="208" width="230" height="74" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="511" y="227" text-anchor="middle" font-size="10" font-weight="700" fill="#78350f">3. Reasignar Cartera (Modal / Lote)</text>
+          <text x="511" y="242" text-anchor="middle" font-size="8.8" fill="#92400e">Alcances: ESTA_OC | ESTA_OBRA | Plaza (ZONA)</text>
+          <text x="511" y="256" text-anchor="middle" font-size="8.8" fill="#334155">Valida compradora activa en usuarios_ek9</text>
+          <text x="511" y="270" text-anchor="middle" font-size="8.8" fill="#334155">Inserta tipo REASIGNACION + metadata JSON</text>
+
+          <rect x="666" y="216" width="234" height="58" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="783" y="239" text-anchor="middle" font-size="10" font-weight="700" fill="#78350f">NO Reinicia Días de Inactividad</text>
+          <text x="783" y="255" text-anchor="middle" font-size="9" fill="#92400e">Conserva antigüedad real de seguimiento</text>
+
+          <!-- Arrows -->
+          <line x1="105" y1="192" x2="105" y2="230" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="113" y="214" font-size="9" font-weight="700" fill="#e11d48">NO</text>
+
+          <line x1="185" y1="152" x2="218" y2="152" stroke="#334155" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="195" y="144" font-size="9" font-weight="700" fill="#059669">SÍ</text>
+
+          <path d="M 348 140 L 372 140 L 372 51 L 394 51" fill="none" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+          <line x1="348" y1="152" x2="394" y2="146" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+          <path d="M 348 164 L 372 164 L 372 245 L 394 245" fill="none" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+
+          <line x1="626" y1="51" x2="664" y2="51" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+          <line x1="626" y1="145" x2="664" y2="145" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+          <line x1="626" y1="245" x2="664" y2="245" stroke="#334155" stroke-width="1.4" marker-end="url(#arr3)"/>
+        </svg>
+      </div>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 4 · Ciclo de Estados de una OC en Seguimiento</span>
+          <span class="tag">Máquina de Estados</span>
+        </div>
+        <svg viewBox="0 0 920 190" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+            </marker>
+          </defs>
+
+          <!-- Start circle -->
+          <circle cx="38" cy="60" r="10" fill="#0f172a"/>
+          <line x1="48" y1="60" x2="96" y2="60" stroke="#334155" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+          <!-- ABIERTA -->
+          <rect x="98" y="34" width="145" height="52" rx="26" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+          <text x="170" y="57" text-anchor="middle" font-size="11" font-weight="800" fill="#065f46">ABIERTA</text>
+          <text x="170" y="72" text-anchor="middle" font-size="8.5" fill="#047857">Inicialización automática</text>
+
+          <!-- EN_ESPERA_PROVEEDOR -->
+          <rect x="355" y="34" width="190" height="52" rx="26" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+          <text x="450" y="57" text-anchor="middle" font-size="10.5" font-weight="800" fill="#92400e">EN_ESPERA_PROVEEDOR</text>
+          <text x="450" y="72" text-anchor="middle" font-size="8.5" fill="#b45309">Con motivo registrado</text>
+
+          <!-- EN_LIMBO -->
+          <rect x="215" y="124" width="215" height="48" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+          <text x="322" y="145" text-anchor="middle" font-size="10.5" font-weight="800" fill="#9f1239">ALERTA LIMBO (&gt; 60 días)</text>
+          <text x="322" y="160" text-anchor="middle" font-size="8.5" fill="#be123c">Sin Nota, Estado ni Pago reciente</text>
+
+          <!-- Terminal States -->
+          <rect x="695" y="24" width="180" height="44" rx="8" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+          <text x="785" y="44" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a">CERRADA</text>
+          <text x="785" y="58" text-anchor="middle" font-size="8.5" fill="#475569">Excluida de alerta Limbo</text>
+
+          <rect x="695" y="114" width="180" height="44" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+          <text x="785" y="134" text-anchor="middle" font-size="11" font-weight="800" fill="#334155">CANCELADA</text>
+          <text x="785" y="148" text-anchor="middle" font-size="8.5" fill="#475569">Excluida de alerta Limbo</text>
+
+          <!-- Transitions -->
+          <line x1="243" y1="52" x2="353" y2="52" stroke="#334155" stroke-width="1.3" marker-end="url(#arr4)"/>
+          <text x="298" y="45" text-anchor="middle" font-size="8.5" fill="#475569">Cambio manual</text>
+
+          <line x1="355" y1="68" x2="245" y2="68" stroke="#334155" stroke-width="1.3" marker-end="url(#arr4)"/>
+
+          <path d="M 170 86 L 170 148 L 213 148" fill="none" stroke="#e11d48" stroke-width="1.4" marker-end="url(#arr4)"/>
+          <line x1="415" y1="86" x2="365" y2="122" stroke="#e11d48" stroke-width="1.4" marker-end="url(#arr4)"/>
+          <path d="M 270 124 L 270 105 L 210 86" fill="none" stroke="#059669" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#arr4)"/>
+          <text x="236" y="109" text-anchor="middle" font-size="8.3" font-weight="700" fill="#059669">Nota / Pago</text>
+
+          <line x1="545" y1="46" x2="693" y2="46" stroke="#334155" stroke-width="1.4" marker-end="url(#arr4)"/>
+          <text x="620" y="39" text-anchor="middle" font-size="8.5" fill="#475569">Cierre con motivo</text>
+
+          <path d="M 545 68 L 620 68 L 620 130 L 693 130" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#arr4)"/>
+          <line x1="430" y1="148" x2="693" y2="140" stroke="#334155" stroke-width="1.3" marker-end="url(#arr4)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 4 -->
+    <section id="sec4">
+      <h2><span class="sec-num">4</span> Operación Diaria, Semáforo de Antigüedad y Expediente Digital</h2>
+      <p>
+        La vista principal de Órdenes de Compra (<code>GET /api/ordenes-recientes</code>) calcula en tiempo real el saldo disponible de cada OC (<code>importe_oc - sumatoria_programada</code>) y la clasifica en tarjetas de <strong>Semáforo de Antigüedad</strong>:
+      </p>
+
+      <div class="grid-cards">
+        <div class="sem-card sem-verde">
+          <strong>VERDE · 30d</strong>
+          <span>Menor a 30 días desde fecha OC</span>
+        </div>
+        <div class="sem-card sem-amarillo">
+          <strong>AMARILLO · 30-90d</strong>
+          <span>Entre 30 y 90 días inclusive</span>
+        </div>
+        <div class="sem-card sem-naranja">
+          <strong>NARANJA · 90-180d</strong>
+          <span>Mayor a 90 y hasta 180 días</span>
+        </div>
+        <div class="sem-card sem-rojo">
+          <strong>ROJO · 180d / 1 año</strong>
+          <span>&gt; 180 días (Subfiltro ≥ 365 días)</span>
+        </div>
+        <div class="sem-card sem-gris">
+          <strong>LIQUIDADO · PAGADA</strong>
+          <span>Saldo disponible &le; $0.009</span>
+        </div>
+      </div>
+
+      <ul>
+        <li><strong>Anti-Duplicidad Documental:</strong> Una vez que una OC cuenta con registros en <code>documentos_oc</code>, se bloquea cualquier carga adicional para evitar comprobantes repetidos.</li>
+        <li><strong>Regla de Lotes (2 a 4 documentos) y Validación XML CFDI:</strong> Al adjuntar comprobantes en programación por lote, se exigen de 2 a 4 archivos por OC. Si incluye archivos <code>.xml</code>, el sistema lee el nodo <code>Comprobante[Total]</code> y exige que la suma facturada sea <strong>estrictamente menor</strong> al monto programado.</li>
+        <li><strong>Doble Respaldo Físico:</strong> Tras guardar en <code>documentos_ejemplo/</code>, replica hacia <code>C:\EnkontrolV9\WebEk10</code> (si existe) y opcionalmente a FTP si está activo <code>FTP_HABILITADO</code>.</li>
+      </ul>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 5 · Flujo de Consulta de Semáforo y Blindaje Documental</span>
+          <span class="tag">Validación CFDI y Anti-Duplicados</span>
+        </div>
+        <svg viewBox="0 0 920 225" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+            </marker>
+          </defs>
+
+          <rect x="18" y="34" width="150" height="58" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+          <text x="93" y="56" text-anchor="middle" font-size="10" font-weight="700" fill="#1e1b4b">Filtros de Operación</text>
+          <text x="93" y="72" text-anchor="middle" font-size="8.8" fill="#4338ca">Semáforo tiene prioridad</text>
+          <text x="93" y="84" text-anchor="middle" font-size="8.8" fill="#4338ca">sobre filtro HOY/SEMANA</text>
+
+          <rect x="200" y="34" width="160" height="58" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+          <text x="280" y="56" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">Tabla Operativa Vue 3</text>
+          <text x="280" y="72" text-anchor="middle" font-size="8.8" fill="#334155">Saldo = Total - Programado</text>
+          <text x="280" y="84" text-anchor="middle" font-size="8.8" fill="#334155">Edición masiva en línea</text>
+
+          <polygon points="462,22 538,63 462,104 386,63" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="462" y="59" text-anchor="middle" font-size="9.2" font-weight="700" fill="#78350f">¿Tiene 2-4 Docs y</text>
+          <text x="462" y="72" text-anchor="middle" font-size="9.2" font-weight="700" fill="#78350f">sin duplicados?</text>
+
+          <rect x="394" y="148" width="136" height="50" rx="6" fill="#fff1f2" stroke="#e11d48" stroke-width="1.5"/>
+          <text x="462" y="169" text-anchor="middle" font-size="9.8" font-weight="700" fill="#9f1239">HTTP 400 Bloqueado</text>
+          <text x="462" y="184" text-anchor="middle" font-size="8.5" fill="#be123c">OC ya adjuntada o rango invalido</text>
+
+          <polygon points="642,22 716,63 642,104 568,63" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="642" y="59" text-anchor="middle" font-size="9.2" font-weight="700" fill="#78350f">¿Suma XML CFDI</text>
+          <text x="642" y="72" text-anchor="middle" font-size="9.2" font-weight="700" fill="#78350f">&lt; Monto Pago?</text>
+
+          <rect x="572" y="148" width="140" height="50" rx="6" fill="#fff1f2" stroke="#e11d48" stroke-width="1.5"/>
+          <text x="642" y="169" text-anchor="middle" font-size="9.8" font-weight="700" fill="#9f1239">HTTP 400 Rechazado</text>
+          <text x="642" y="184" text-anchor="middle" font-size="8.5" fill="#be123c">Factura XML excede o iguala pago</text>
+
+          <rect x="752" y="28" width="150" height="72" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+          <text x="827" y="49" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">Persistencia + Réplica</text>
+          <text x="827" y="65" text-anchor="middle" font-size="8.8" fill="#047857">documentos_ejemplo/</text>
+          <text x="827" y="78" text-anchor="middle" font-size="8.8" fill="#047857">WebEk10 Local + FTP</text>
+
+          <!-- Arrows -->
+          <line x1="168" y1="63" x2="198" y2="63" stroke="#334155" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <line x1="360" y1="63" x2="384" y2="63" stroke="#334155" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <line x1="462" y1="104" x2="462" y2="146" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <text x="470" y="128" font-size="9" font-weight="700" fill="#e11d48">NO</text>
+
+          <line x1="538" y1="63" x2="566" y2="63" stroke="#334155" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <text x="546" y="55" font-size="9" font-weight="700" fill="#059669">SÍ</text>
+
+          <line x1="642" y1="104" x2="642" y2="146" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <text x="650" y="128" font-size="9" font-weight="700" fill="#e11d48">NO</text>
+
+          <line x1="716" y1="63" x2="750" y2="63" stroke="#334155" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <text x="727" y="55" font-size="9" font-weight="700" fill="#059669">SÍ</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 5 -->
+    <section id="sec5" class="page-break">
+      <h2><span class="sec-num">5</span> Programación de Pagos a BI y Conciliación Semanal</h2>
+      <p>
+        El proceso financiero de programación por lote garantiza integridad en dos fases independientes: <strong>1) Guardado transaccional local (<code>PENDIENTE</code>)</strong> y <strong>2) Confirmación oficial hacia BI (<code>ENVIADO</code>)</strong>.
+      </p>
+      <ol>
+        <li><strong>Validación Autoritaria en Servidor:</strong> Al guardar un lote (<code>POST /api/ordenes/programar-lote</code>), el servidor ignora el total del navegador, bloquea la fila en <code>ordenes_compra_ek9</code> con <code>lockForUpdate()</code> y resta tanto pagos enviados como pendientes. Si un solo ítem rebasa su saldo, revierte toda la transacción (<code>rollBack</code>) y borra archivos temporales.</li>
+        <li><strong>Despacho Controlado a SQL Server BI:</strong> Desde la tabla de <em>Guardados</em>, al presionar Enviar (<code>POST /api/ordenes/programaciones/{id}/enviar</code>), <code>BIService</code> inserta la fila en <code>dbo._pagos_programados</code> (<code>10.30.0.2</code>). Solo si SQL Server confirma el alta, cambia <code>estado_envio</code> a <code>ENVIADO</code> y registra la actividad en <code>oc_movimientos</code>.</li>
+        <li><strong>Conciliación Semanal y Exportación:</strong> <code>PagosService</code> alimenta la pestaña gerencial de Conciliación con filtros cacheados por 300 segundos, checkboxes en tiempo real (<code>CONCILIADO</code>) y descarga Excel UTF-8 BOM (<code>GET /api/descargar-excel</code>).</li>
+      </ol>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 6 · Secuencia de Programación por Lote y Envío a SQL Server BI</span>
+          <span class="tag">Integridad Transaccional</span>
+        </div>
+        <svg viewBox="0 0 920 315" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b"/>
+            </marker>
+            <marker id="arr6-dash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+            </marker>
+          </defs>
+
+          <!-- Participants -->
+          <rect x="20" y="14" width="120" height="32" rx="5" fill="#1e293b"/>
+          <text x="80" y="34" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff">Compradora / SPA</text>
+          <line x1="80" y1="46" x2="80" y2="298" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <rect x="245" y="14" width="145" height="32" rx="5" fill="#4f46e5"/>
+          <text x="317" y="34" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff">OrdenesService (Laravel)</text>
+          <line x1="317" y1="46" x2="317" y2="298" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <rect x="495" y="14" width="150" height="32" rx="5" fill="#0f766e"/>
+          <text x="570" y="34" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff">SQLite + Seguimiento</text>
+          <line x1="570" y1="46" x2="570" y2="298" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <rect x="745" y="14" width="155" height="32" rx="5" fill="#1d4ed8"/>
+          <text x="822" y="34" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff">SQL Server BI (Aryve2)</text>
+          <line x1="822" y1="46" x2="822" y2="298" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <!-- Phase 1 Box -->
+          <rect x="12" y="58" width="660" height="122" rx="6" fill="rgba(238,242,255,0.45)" stroke="#a5b4fc"/>
+          <text x="22" y="73" font-size="9.5" font-weight="800" fill="#3730a3">FASE 1 · GUARDADO DE LOTE TRANSACCIONAL</text>
+
+          <line x1="80" y1="90" x2="315" y2="90" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arr6)"/>
+          <text x="197" y="84" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f172a">1. POST /api/ordenes/programar-lote</text>
+
+          <line x1="317" y1="112" x2="568" y2="112" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arr6)"/>
+          <text x="443" y="106" text-anchor="middle" font-size="9" fill="#0f172a">2. Validar saldo (lockForUpdate) + Regla XML &lt; Pago</text>
+
+          <line x1="317" y1="138" x2="568" y2="138" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arr6)"/>
+          <text x="443" y="132" text-anchor="middle" font-size="9" fill="#0f172a">3. INSERT programaciones_oc (PENDIENTE) + oc_movimientos</text>
+
+          <line x1="317" y1="164" x2="82" y2="164" stroke="#059669" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr6-dash)"/>
+          <text x="197" y="158" text-anchor="middle" font-size="9" font-weight="700" fill="#065f46">4. 200 OK (Guardado local + Docs replicados)</text>
+
+          <!-- Phase 2 Box -->
+          <rect x="12" y="192" width="896" height="102" rx="6" fill="rgba(236,253,245,0.45)" stroke="#6ee7b7"/>
+          <text x="22" y="207" font-size="9.5" font-weight="800" fill="#065f46">FASE 2 · DESPACHO INDIVIDUAL HACIA BI</text>
+
+          <line x1="80" y1="224" x2="315" y2="224" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arr6)"/>
+          <text x="197" y="218" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f172a">5. POST /programaciones/{id}/enviar</text>
+
+          <line x1="317" y1="244" x2="820" y2="244" stroke="#1d4ed8" stroke-width="1.6" marker-end="url(#arr6)"/>
+          <text x="570" y="238" text-anchor="middle" font-size="9.2" font-weight="700" fill="#1e3a8a">6. BIService::insertarLote() → INSERT dbo._pagos_programados</text>
+
+          <line x1="822" y1="264" x2="319" y2="264" stroke="#059669" stroke-width="1.4" stroke-dasharray="4 2" marker-end="url(#arr6-dash)"/>
+          <text x="570" y="259" text-anchor="middle" font-size="8.8" fill="#047857">7. Confirmación ODBC (Si falla, sigue PENDIENTE para reintento)</text>
+
+          <line x1="317" y1="284" x2="568" y2="284" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arr6)"/>
+          <text x="443" y="278" text-anchor="middle" font-size="9" fill="#0f172a">8. UPDATE estado_envio = ENVIADO + PAGO_ENVIADO_BI</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 6 -->
+    <section id="sec6" class="page-break">
+      <h2><span class="sec-num">6</span> Telemetría, Espejo de BD y Publicación Blindada</h2>
+      <p>
+        El sistema está monitoreado continuamente por la <strong>Torre de Control (<code>DASHBOARD_EK10</code> en el puerto 8000)</strong> y cuenta con despliegue automatizado y sanitizado hacia la versión de servidor <code>CONTROL_PAGOS</code>.
+      </p>
+      <ul>
+        <li><strong>Telemetría en Vivo:</strong> Cada 4 segundos, <code>DASHBOARD_EK10</code> consulta <code>http://127.0.0.1:8050/api/telemetria</code> para mostrar en la tarjeta OC la salud (<code>100%</code>), latencia DB y conteos diarios de Aryve/Velas.</li>
+        <li><strong>Espejo Automático Laravel (<code>AppServiceProvider</code>):</strong> Al finalizar cualquier petición <code>POST</code>, <code>PUT</code> o <code>DELETE</code>, copia <code>database/ecosistema_oc.db</code> a <code>datos/ecosistema_oc.db</code> para persistir en Git. Al arrancar, si el archivo de <code>datos/</code> es más nuevo, actualiza <code>database/</code>.</li>
+        <li><strong>Publicación Blindada (<code>publisher_oc.py</code>):</strong> Al detectar cambios y pulsar <em>ACTUALIZAR EQUIPO</em>, copia las carpetas Laravel sin incluir <code>.env</code>, <code>vendor</code> ni <code>*.db</code>; sanitiza rutas locales y credenciales; ejecuta auditoría de seguridad; y sube a GitHub.</li>
+      </ul>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 7 · Observabilidad y Publicación Blindada a Producción</span>
+          <span class="tag">DASHBOARD_EK10 ↔ CONTROL_PAGOS</span>
+        </div>
+        <svg viewBox="0 0 920 180" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+            </marker>
+          </defs>
+
+          <rect x="18" y="28" width="180" height="58" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+          <text x="108" y="49" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">CONTROL_PAGOS_OC :8050</text>
+          <text x="108" y="65" text-anchor="middle" font-size="8.8" fill="#047857">/api/telemetria + Espejo DB</text>
+
+          <rect x="18" y="106" width="180" height="54" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+          <text x="108" y="128" text-anchor="middle" font-size="10" font-weight="700" fill="#78350f">detector.py (mtime)</text>
+          <text x="108" y="144" text-anchor="middle" font-size="8.8" fill="#92400e">Alerta: CAMBIOS PENDIENTES</text>
+
+          <rect x="242" y="28" width="175" height="132" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+          <text x="329" y="54" text-anchor="middle" font-size="10.5" font-weight="800" fill="#1e1b4b">Torre de Control :8000</text>
+          <text x="329" y="75" text-anchor="middle" font-size="9" fill="#3730a3">Tarjeta OC en Vivo</text>
+          <text x="329" y="92" text-anchor="middle" font-size="8.8" fill="#475569">ARYVE HOY / VELAS HOY</text>
+          <text x="329" y="114" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">Botón:</text>
+          <text x="329" y="130" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">ACTUALIZAR EQUIPO</text>
+
+          <rect x="462" y="28" width="210" height="132" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+          <text x="567" y="52" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f172a">publisher_oc.py (Blindaje)</text>
+          <text x="567" y="74" text-anchor="middle" font-size="8.8" fill="#334155">1. Copia Laravel (ignora .env, *.db)</text>
+          <text x="567" y="93" text-anchor="middle" font-size="8.8" fill="#334155">2. sanitizar_archivo_oc() rutas</text>
+          <text x="567" y="112" text-anchor="middle" font-size="8.8" fill="#059669">3. auditar_blindaje_oc() = 100%</text>
+          <text x="567" y="131" text-anchor="middle" font-size="8.8" fill="#334155">4. git commit + push main</text>
+
+          <rect x="716" y="48" width="186" height="90" rx="6" fill="#0f172a"/>
+          <text x="809" y="78" text-anchor="middle" font-size="11" font-weight="800" fill="#ffffff">GitHub CONTROL_PAGOS</text>
+          <text x="809" y="97" text-anchor="middle" font-size="9" fill="#cbd5e1">Versión Limpia Servidor</text>
+          <text x="809" y="114" text-anchor="middle" font-size="8.8" fill="#38bdf8">+ Webhook de Deploy opcional</text>
+
+          <line x1="198" y1="57" x2="240" y2="68" stroke="#334155" stroke-width="1.5" marker-end="url(#arr7)"/>
+          <line x1="198" y1="133" x2="240" y2="122" stroke="#334155" stroke-width="1.5" marker-end="url(#arr7)"/>
+          <line x1="417" y1="94" x2="460" y2="94" stroke="#334155" stroke-width="1.5" marker-end="url(#arr7)"/>
+          <line x1="672" y1="94" x2="714" y2="94" stroke="#334155" stroke-width="1.5" marker-end="url(#arr7)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 7 -->
+    <section id="sec7" class="page-break">
+      <h2><span class="sec-num">7</span> Modelo de Datos y Diccionario de Tablas</h2>
+      <p>
+        La integridad entre órdenes sincronizadas de Enkontrol, seguimientos locales, pagos programados y documentos se resuelve mediante la clave lógica compuesta <code>(empresa, centro_costos, numero_oc)</code>.
+      </p>
+
+      <div class="diagram-card">
+        <div class="diagram-title">
+          <span>Diagrama 8 · Modelo Relacional de Tablas (SQLite Local y SQL Server BI)</span>
+          <span class="tag">Entidad - Relación</span>
+        </div>
+        <svg viewBox="0 0 920 290" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+            </marker>
+          </defs>
+
+          <!-- Central Entity -->
+          <rect x="330" y="16" width="260" height="86" rx="6" fill="#0f172a"/>
+          <text x="460" y="36" text-anchor="middle" font-size="11" font-weight="800" fill="#fbbf24">ordenes_compra_ek9</text>
+          <line x1="330" y1="43" x2="590" y2="43" stroke="#334155"/>
+          <text x="342" y="59" font-size="9" fill="#e2e8f0">PK Lógica: empresa, centro_costos, numero_oc</text>
+          <text x="342" y="74" font-size="9" fill="#cbd5e1">Campos: fecha, proveedor, total, total_rec, total_fac</text>
+          <text x="342" y="89" font-size="9" fill="#cbd5e1">estatus (C=Cancelada), id_empleado, tipo/rubro</text>
+
+          <!-- Left: Seguimientos y Movimientos -->
+          <rect x="20" y="130" width="255" height="68" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+          <text x="147" y="148" text-anchor="middle" font-size="10.5" font-weight="800" fill="#78350f">oc_seguimientos (1 : 1)</text>
+          <text x="30" y="165" font-size="8.8" fill="#334155">responsable_id, responsable_nombre</text>
+          <text x="30" y="179" font-size="8.8" fill="#334155">estado_seguimiento, seguimiento_iniciado_en</text>
+          <text x="30" y="191" font-size="8.8" fill="#92400e">ultimo_movimiento_en, ultimo_movimiento_tipo</text>
+
+          <rect x="20" y="216" width="255" height="60" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.4"/>
+          <text x="147" y="234" text-anchor="middle" font-size="10.5" font-weight="800" fill="#78350f">oc_movimientos (1 : N Bitácora)</text>
+          <text x="30" y="250" font-size="8.8" fill="#334155">tipo (NOTA, ESTADO, REASIGNACION, PAGO_*)</text>
+          <text x="30" y="264" font-size="8.8" fill="#334155">descripcion, usuario_nombre, metadata JSON, creado_en</text>
+
+          <!-- Center: Programaciones y Documentos -->
+          <rect x="330" y="130" width="260" height="68" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+          <text x="460" y="148" text-anchor="middle" font-size="10.5" font-weight="800" fill="#064e3b">programaciones_oc (1 : N)</text>
+          <text x="342" y="165" font-size="8.8" fill="#334155">monto_programado, total_oc, semana, rubro</text>
+          <text x="342" y="179" font-size="8.8" fill="#334155">concepto, creado_por, creado_en</text>
+          <text x="342" y="191" font-size="8.8" fill="#047857">estado_envio: PENDIENTE | ENVIADO</text>
+
+          <rect x="330" y="216" width="260" height="60" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.4"/>
+          <text x="460" y="234" text-anchor="middle" font-size="10.5" font-weight="800" fill="#064e3b">documentos_oc (1 : N Adjuntos)</text>
+          <text x="342" y="250" font-size="8.8" fill="#334155">id_abono, nombre_original, nombre_guardado</text>
+          <text x="342" y="264" font-size="8.8" fill="#334155">ruta_archivo, tamano_bytes, creado_por</text>
+
+          <!-- Right: BI, Usuarios, Pagos, Semanas -->
+          <rect x="645" y="20" width="255" height="58" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+          <text x="772" y="38" text-anchor="middle" font-size="10.5" font-weight="800" fill="#1e3a8a">dbo._pagos_programados (BI)</text>
+          <text x="655" y="54" font-size="8.8" fill="#1d4ed8">SQL Server 10.30.0.2 (Base Aryve2)</text>
+          <text x="655" y="68" font-size="8.8" fill="#334155">Destino final tras pulsar "Enviar a BI"</text>
+
+          <rect x="645" y="94" width="255" height="56" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.4"/>
+          <text x="772" y="112" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f172a">usuarios_ek9</text>
+          <text x="655" y="128" font-size="8.8" fill="#334155">empleado, empresa, nombre, puesto, email</text>
+          <text x="655" y="142" font-size="8.8" fill="#334155">rol, plaza, estatus (B = Inactivo bloqueado)</text>
+
+          <rect x="645" y="164" width="255" height="56" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.4"/>
+          <text x="772" y="182" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f172a">pagos (Conciliación Semanal)</text>
+          <text x="655" y="198" font-size="8.8" fill="#334155">PROPIETARIO, ZONA (Plaza), OBRA, RUBRO</text>
+          <text x="655" y="212" font-size="8.8" fill="#334155">IMPORTE, PAGO A, DIFERENCIA, CONCILIADO</text>
+
+          <rect x="645" y="232" width="255" height="44" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.4"/>
+          <text x="772" y="250" text-anchor="middle" font-size="10" font-weight="800" fill="#0f172a">cat_semanas_ek9</text>
+          <text x="655" y="265" font-size="8.8" fill="#334155">etiqueta (SEM: N-YYYY), fecha_inicio, fecha_final</text>
+
+          <!-- Relations -->
+          <path d="M 330 68 L 147 68 L 147 128" fill="none" stroke="#475569" stroke-width="1.4" marker-end="url(#arr8)"/>
+          <line x1="147" y1="198" x2="147" y2="214" stroke="#d97706" stroke-width="1.4" marker-end="url(#arr8)"/>
+          <line x1="460" y1="102" x2="460" y2="128" stroke="#059669" stroke-width="1.4" marker-end="url(#arr8)"/>
+          <line x1="460" y1="198" x2="460" y2="214" stroke="#059669" stroke-width="1.4" marker-end="url(#arr8)"/>
+          <path d="M 590 160 L 620 160 L 620 48 L 643 48" fill="none" stroke="#2563eb" stroke-width="1.4" marker-end="url(#arr8)"/>
+          <path d="M 275 160 L 305 160 L 305 282 L 628 282 L 628 122 L 643 122" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arr8)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SECCION 8 -->
+    <section id="sec8">
+      <h2><span class="sec-num">8</span> Catálogo Consolidado de Endpoints API (<code>routes/web.php</code>)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:72px;">Método</th>
+            <th style="width:245px;">Endpoint</th>
+            <th style="width:170px;">Controlador / Acceso</th>
+            <th>Propósito Funcional</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/</code></td><td><code>HomeController@index</code> (SPA)</td><td>Carga la SPA Vue 3 sin caché navegador e inyecta flags de sesión.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/login</code> · <code>/api/logout</code></td><td><code>AuthController</code> (Público)</td><td>Autentica contra <code>usuarios_ek9</code> (bloqueando estatus <code>B</code>) o sesión <code>ADMIN</code>.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes-recientes</code></td><td><code>OrdenesController@recientes</code></td><td>Consulta OCs con saldo real, semáforo de antigüedad, KPIs, abonos y documentos.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes/catalogo-obras</code></td><td><code>OrdenesController</code></td><td>Lista obras (<code>centro_costos</code>) distintas de la empresa activa.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/sincronizar</code></td><td><code>OrdenesController</code></td><td>Ejecuta <code>sincronizar_ordenes_ek9.py --dias=5</code> con candado de 45s.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/programar-lote</code></td><td><code>OrdenesController</code></td><td>Valida saldo en BD, 2–4 documentos y regla XML CFDI; guarda lote como <code>PENDIENTE</code>.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/programar-abono</code></td><td><code>OrdenesController</code></td><td>Registra abono individual como <code>ENVIADO</code> y replica a SQL Server BI.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes/programaciones-semana</code></td><td><code>OrdenesController</code></td><td>Lista programaciones guardadas/enviadas de la semana con conteo documental.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/programaciones/{id}/enviar</code></td><td><code>OrdenesController</code></td><td>Envía una fila <code>PENDIENTE</code> a <code>dbo._pagos_programados</code> en SQL Server BI.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/eliminar-abono</code></td><td><code>OrdenesController</code> (Lista Blanca)</td><td>Elimina abono y limpia documentos pendientes o registro en BI si ya fue enviado.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/subir-documentos</code> · <code>GET /documentos-oc</code></td><td><code>OrdenesController</code></td><td>Sube/consulta comprobantes directos validando no duplicidad en <code>documentos_oc</code>.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/descargar-archivo-oc/{id}</code></td><td><code>OrdenesController</code></td><td>Descarga física desde almacenamiento local o <code>C:\EnkontrolV9\WebEk10</code>.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes/seguimiento</code></td><td><code>OrdenSeguimientoController</code> (Admin)</td><td>Monitor paginado con días de inactividad, flag Limbo (&gt;60d) y resumen.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes/seguimiento/compradoras</code></td><td><code>OrdenSeguimientoController</code> (Admin)</td><td>Catálogo de compradoras activas (<code>estatus != 'B'</code>) en <code>usuarios_ek9</code>.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/ordenes/seguimiento/historial</code></td><td><code>OrdenSeguimientoController</code> (Admin)</td><td>Últimos 30 eventos en <code>oc_movimientos</code> de una orden de compra.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/seguimiento/nota</code> · <code>/estado</code></td><td><code>OrdenSeguimientoController</code> (Admin)</td><td>Registra nota o cambia estado operativo con motivo y reinicia inactividad.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/ordenes/seguimiento/reasignar-cartera</code></td><td><code>OrdenSeguimientoController</code> (Admin)</td><td>Reasigna cartera (<code>ESTA_OC</code>, <code>ESTA_OBRA</code> o Plaza) conservando contador de inactividad.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/filtros</code> · <code>/api/pagos</code></td><td><code>PagosController</code> (Conciliación)</td><td>Catálogos cacheados 300s, semana vigente y listado paginado de conciliación.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/pagos/actualizar</code> · <code>/pagos/programar</code></td><td><code>PagosController</code> (Conciliación)</td><td>Concilia filas en tiempo real o inserta registros manuales en <code>pagos</code>.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/descargar-excel</code></td><td><code>OrdenesController</code></td><td>Exporta concentrado CSV UTF-8 BOM compatible con Excel.</td></tr>
+          <tr><td><span class="badge b-get">GET</span></td><td><code>/api/telemetria</code></td><td><code>MetricasController</code> (Torre EK10)</td><td>Métricas en vivo de salud, latencia y conteos de OCs para <code>DASHBOARD_EK10</code>.</td></tr>
+          <tr><td><span class="badge b-post">POST</span></td><td><code>/api/limpiar-cache</code> · <code>/api/reindexar</code></td><td><code>MetricasController</code> (Operación)</td><td>Limpia caché (<code>Cache::flush()</code>) y fuerza lectura directa sobre índices B-Tree.</td></tr>
+        </tbody>
+      </table>
+
+      <footer class="footer-note">
+        <span>CONTROL_PAGOS_OC · Documentación Técnica y de Procesos</span>
+        <span>Fuente verificada en repositorio Laravel 13 · Generado el 18/11/2026</span>
+      </footer>
+    </section>
+
+  </div>
+</body>
+</html>

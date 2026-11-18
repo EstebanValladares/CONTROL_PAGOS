@@ -157,17 +157,17 @@ class PagosService
         if (!empty($busqueda)) {
             $p = "%{$busqueda}%";
             $query->where(function ($q) use ($p) {
-                $q->where('O.C.', 'LIKE', $p)
-                  ->orWhere('CONTRATISTA', 'LIKE', $p)
-                  ->orWhere('OBRA', 'LIKE', $p)
-                  ->orWhere('CONCEPTO', 'LIKE', $p);
+                $q->whereRaw('"O.C." LIKE ?', [$p])
+                  ->orWhereRaw('"CONTRATISTA" LIKE ?', [$p])
+                  ->orWhereRaw('"OBRA" LIKE ?', [$p])
+                  ->orWhereRaw('"CONCEPTO" LIKE ?', [$p]);
             });
         }
 
         if (!empty($responsable) && !in_array(strtoupper($responsable), ['ADMIN', 'TODOS'], true)) {
             $query->where(function ($q) use ($responsable) {
-                $q->where('ENVIADO POR', $responsable)
-                  ->orWhere('ENVIADO POR', 'LIKE', "%{$responsable}%");
+                $q->whereRaw('"ENVIADO POR" = ?', [$responsable])
+                  ->orWhereRaw('"ENVIADO POR" LIKE ?', ["%{$responsable}%"]);
             });
         }
 
@@ -199,11 +199,11 @@ class PagosService
         $sumaPagando = round((float)($totales->suma_pagando ?? 0.0), 2);
         $sumaDiferencia = round((float)($totales->suma_diferencia ?? 0.0), 2);
 
-        $filas = $query->select(
-            'id_fila', 'OBRA', 'NOMBRE OBRA', 'O.C.', 'CONTRATISTA', 'RUBRO',
-            'IMPORTE', 'PAGO A', 'DIFERENCIA', 'ENVIADO POR', 'ZONA', 'FRACCIONAMIENTO', 'SEMANA',
-            'ESTATUS', 'CONCILIADO', 'CLAVE PROV', 'ID PROV'
-        )
+        $filas = $query->selectRaw('
+            "id_fila", "OBRA", "NOMBRE OBRA", "O.C.", "CONTRATISTA", "RUBRO",
+            "IMPORTE", "PAGO A", "DIFERENCIA", "ENVIADO POR", "ZONA", "FRACCIONAMIENTO", "SEMANA",
+            "ESTATUS", "CONCILIADO", "CLAVE PROV", "ID PROV"
+        ')
         ->orderBy('id_fila', 'desc')
         ->offset($offset)
         ->limit($limite)
@@ -275,52 +275,135 @@ class PagosService
         return $nextId;
     }
 
-    public static function generarCsvConciliado(array $params): string
+    public static function streamCsvConciliado(array $params): void
     {
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
         $empresa = strtoupper(trim($params['empresa'] ?? ''));
         $plaza = trim($params['plaza'] ?? '');
         $semana = trim($params['semana'] ?? '');
         $responsable = trim($params['responsable'] ?? '');
 
-        $query = DB::table('pagos');
+        $sql = 'SELECT "id_fila", "OBRA", "NOMBRE OBRA", "O.C.", "CONTRATISTA", "RUBRO", "IMPORTE", "PAGO A", "DIFERENCIA", "ENVIADO POR", "ZONA", "FRACCIONAMIENTO", "SEMANA", "ESTATUS", "CONCILIADO", "CLAVE PROV", "ID PROV" FROM "pagos" WHERE 1=1';
+        $bindings = [];
 
         if ($empresa === 'VELAS') {
-            $query->where('PROPIETARIO', 'GVDC');
+            $sql .= ' AND "PROPIETARIO" = ?';
+            $bindings[] = 'GVDC';
         } elseif ($empresa === 'ARYVE') {
-            $query->whereIn('PROPIETARIO', ['ARYVE', 'Aryve']);
+            $sql .= ' AND "PROPIETARIO" IN (?, ?)';
+            $bindings[] = 'ARYVE';
+            $bindings[] = 'Aryve';
         }
 
         if (!empty($plaza)) {
-            $query->where('ZONA', $plaza);
+            $sql .= ' AND "ZONA" = ?';
+            $bindings[] = $plaza;
         }
 
         if (!empty($semana)) {
-            $query->where('SEMANA', $semana);
+            $sql .= ' AND "SEMANA" = ?';
+            $bindings[] = $semana;
         }
 
         if (!empty($responsable) && !in_array(strtoupper($responsable), ['ADMIN', 'TODOS'], true)) {
-            $query->where(function ($q) use ($responsable) {
-                $q->where('ENVIADO POR', $responsable)
-                  ->orWhere('ENVIADO POR', 'LIKE', "%{$responsable}%");
-            });
+            $sql .= ' AND ("ENVIADO POR" = ? OR "ENVIADO POR" LIKE ?)';
+            $bindings[] = $responsable;
+            $bindings[] = "%{$responsable}%";
         }
 
-        $registros = $query->get();
+        $sql .= ' ORDER BY "id_fila" DESC';
+
+        $fh = fopen('php://output', 'w');
+        // Escribir BOM UTF-8 para apertura directa en Excel con acentos y caracteres especiales correctos
+        fprintf($fh, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        $pdo = DB::connection()->getPdo();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($bindings);
+
+        $headerEscrito = false;
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if (!$headerEscrito) {
+                fputcsv($fh, array_keys($row));
+                $headerEscrito = true;
+            }
+            fputcsv($fh, array_values($row));
+        }
+
+        if (!$headerEscrito) {
+            fputcsv($fh, ['Sin registros para los filtros seleccionados']);
+        }
+
+        fclose($fh);
+    }
+
+    public static function generarCsvConciliado(array $params): string
+    {
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $empresa = strtoupper(trim($params['empresa'] ?? ''));
+        $plaza = trim($params['plaza'] ?? '');
+        $semana = trim($params['semana'] ?? '');
+        $responsable = trim($params['responsable'] ?? '');
+
+        $sql = 'SELECT "id_fila", "OBRA", "NOMBRE OBRA", "O.C.", "CONTRATISTA", "RUBRO", "IMPORTE", "PAGO A", "DIFERENCIA", "ENVIADO POR", "ZONA", "FRACCIONAMIENTO", "SEMANA", "ESTATUS", "CONCILIADO", "CLAVE PROV", "ID PROV" FROM "pagos" WHERE 1=1';
+        $bindings = [];
+
+        if ($empresa === 'VELAS') {
+            $sql .= ' AND "PROPIETARIO" = ?';
+            $bindings[] = 'GVDC';
+        } elseif ($empresa === 'ARYVE') {
+            $sql .= ' AND "PROPIETARIO" IN (?, ?)';
+            $bindings[] = 'ARYVE';
+            $bindings[] = 'Aryve';
+        }
+
+        if (!empty($plaza)) {
+            $sql .= ' AND "ZONA" = ?';
+            $bindings[] = $plaza;
+        }
+
+        if (!empty($semana)) {
+            $sql .= ' AND "SEMANA" = ?';
+            $bindings[] = $semana;
+        }
+
+        if (!empty($responsable) && !in_array(strtoupper($responsable), ['ADMIN', 'TODOS'], true)) {
+            $sql .= ' AND ("ENVIADO POR" = ? OR "ENVIADO POR" LIKE ?)';
+            $bindings[] = $responsable;
+            $bindings[] = "%{$responsable}%";
+        }
+
+        $sql .= ' ORDER BY "id_fila" DESC';
 
         $rutaExport = storage_path('app/concentrado_oc_conciliado.csv');
+        $dir = dirname($rutaExport);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
         $fh = fopen($rutaExport, 'w');
         // Escribir BOM UTF-8 para apertura directa en Excel con acentos correctos
         fprintf($fh, chr(0xEF).chr(0xBB).chr(0xBF));
 
-        if ($registros->isNotEmpty()) {
-            $columnas = array_keys((array)$registros->first());
-            fputcsv($fh, $columnas);
+        $pdo = DB::connection()->getPdo();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($bindings);
 
-            foreach ($registros as $row) {
-                fputcsv($fh, array_values((array)$row));
+        $headerEscrito = false;
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if (!$headerEscrito) {
+                fputcsv($fh, array_keys($row));
+                $headerEscrito = true;
             }
-        } else {
-            fputcsv($fh, ['Sin registros']);
+            fputcsv($fh, array_values($row));
+        }
+
+        if (!$headerEscrito) {
+            fputcsv($fh, ['Sin registros para los filtros seleccionados']);
         }
 
         fclose($fh);

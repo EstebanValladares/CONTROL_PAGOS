@@ -83,28 +83,4 @@ class PagosController extends Controller
             return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
         }
     }
-
-    public function programar(Request $request): JsonResponse
-    {
-        try {
-            $folio = trim((string)$request->input('folio', ''));
-            $pagando = (float)$request->input('pagando', 0.0);
-
-            if (empty($folio)) {
-                return response()->json(['status' => 'error', 'mensaje' => 'El folio del documento es obligatorio'], 400);
-            }
-            if ($pagando <= 0) {
-                return response()->json(['status' => 'error', 'mensaje' => 'El monto a programar (Pagando) debe ser mayor a $0.00'], 400);
-            }
-
-            $nuevoId = PagosService::programarPago($request->all());
-            return response()->json([
-                'status' => 'ok',
-                'mensaje' => 'Pago de $' . number_format($pagando, 2) . ' programado exitosamente',
-                'id_fila' => $nuevoId,
-            ]);
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'mensaje' => $e->getMessage()], 500);
-        }
-    }
 }

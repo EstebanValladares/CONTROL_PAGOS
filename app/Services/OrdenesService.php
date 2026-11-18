@@ -738,4 +738,68 @@ class OrdenesService
             'programaciones' => $progs,
         ];
     }
+
+    public static function streamCsvOrdenes(array $params): void
+    {
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $empresa = strtoupper(trim($params['empresa'] ?? 'ARYVE'));
+        $temporal = strtoupper(trim($params['temporal'] ?? 'HOY'));
+        $semana = trim($params['semana'] ?? '');
+        $obra = trim($params['obra'] ?? '');
+        $busqueda = trim($params['busqueda'] ?? '');
+
+        $query = DB::table('ordenes_compra_ek9')->where('empresa', $empresa);
+
+        if ($temporal === 'HOY') {
+            $query->whereDate('fecha', date('Y-m-d'));
+        }
+
+        if (!empty($obra)) {
+            $query->where('centro_costos', $obra);
+        }
+
+        if (!empty($busqueda)) {
+            $p = "%{$busqueda}%";
+            $query->where(function ($q) use ($p) {
+                $q->where('numero_oc', 'LIKE', $p)
+                  ->orWhere('proveedor', 'LIKE', $p)
+                  ->orWhere('centro_costos', 'LIKE', $p);
+            });
+        }
+
+        $query->orderBy('fecha', 'desc')->orderBy('numero_oc', 'desc');
+
+        $fh = fopen('php://output', 'w');
+        // Escribir BOM UTF-8 para apertura directa en Excel
+        fprintf($fh, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        $columnas = [
+            'EMPRESA', 'OBRA', 'NUMERO_OC', 'FECHA', 'PROVEEDOR', 'TOTAL_BRUTO',
+            'TOTAL_REC', 'TOTAL_FAC', 'ESTATUS', 'SOLICITO',
+            'TIPO_SUGERIDO', 'RUBRO_SUGERIDO', 'COMENTARIOS'
+        ];
+        fputcsv($fh, $columnas);
+
+        foreach ($query->cursor() as $row) {
+            fputcsv($fh, [
+                $row->empresa,
+                $row->centro_costos,
+                $row->numero_oc,
+                $row->fecha,
+                $row->proveedor,
+                $row->total,
+                $row->total_rec,
+                $row->total_fac,
+                $row->estatus,
+                $row->solicito_empleado,
+                $row->tipo_sugerido,
+                $row->rubro_sugerido,
+                $row->comentarios
+            ]);
+        }
+
+        fclose($fh);
+    }
 }
